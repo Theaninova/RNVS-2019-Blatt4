@@ -3,10 +3,10 @@
 #include <stdint-gcc.h>
 #include <stddef.h>
 
-typedef struct { \
-    void* value; \
-    size_t length; \
-    uint16_t references; \
+typedef struct {
+    void *value;
+    size_t length;
+    uint16_t references;
 } SmartPointer;
 
 #define USE(type, name, scope) \

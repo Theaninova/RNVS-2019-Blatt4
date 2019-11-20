@@ -8,14 +8,14 @@
 #define BYTE uint8_t
 #define BOOL BYTE
 
-#define ACK_BIT (uint8_t) 0x10u
-#define GET_BIT (uint8_t) 0x20u
-#define SET_BIT (uint8_t) 0x40u
-#define DELETE_BIT (uint8_t) 0x80u
+#define ACK_BIT (uint8_t) (0x01u << 4)
+#define GET_BIT (uint8_t) (0x01u << 5)
+#define SET_BIT (uint8_t) (0x01u << 6)
+#define DELETE_BIT (uint8_t) (0x01u << 7)
 
-#define CONTROL_BIT = 0x00u
-#define REPLY_BIT = 0x40u
-#define LOOKUP_BIT = 0x80u
+#define CONTROL_BIT (0x01u << 0)
+#define REPLY_BIT (0x01u << 6)
+#define LOOKUP_BIT (0x01u << 7)
 
 #define MASK &
 #define COMBINE +
@@ -40,6 +40,14 @@ typedef struct {
     uint32_t nodeIp;
     uint16_t nodePort;
 } PeerProtocol;
+
+/**
+ *
+ *
+ * @param msg the encoded data
+ * @return wether it is a PeerProtocol message
+ */
+BOOL isPeerProtocol(void *msg);
 
 /**
  * Gets all parts from a binary message

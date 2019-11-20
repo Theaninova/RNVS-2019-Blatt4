@@ -54,3 +54,7 @@ void *encode_clientProtocol(struct ClientProtocol *data) {
     LOG("Finished encoding");
     return msg;
 }
+
+BOOL isPeerProtocol(void *msg) {
+    return *((BYTE *) msg) MASK CONTROL_BIT;
+}
