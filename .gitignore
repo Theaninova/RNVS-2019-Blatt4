@@ -1,0 +1,7 @@
+cmake-build-debug/
+venv/
+extract/
+build/
+.idea/
+Tut_*.txt
+cmake-build-wsl_profile/

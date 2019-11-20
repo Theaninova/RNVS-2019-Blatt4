@@ -1,0 +1,70 @@
+image: alpine
+
+stages:
+  - Package
+  - Compile
+  - Output Files
+  - Test
+
+Block3.T08G06.tar.gz:
+  stage: Package
+  script:
+    - tar -czvf Block3.T08G06.tar.gz CMakeLists.txt src/
+  artifacts:
+    paths:
+      - Block3.T08G06.tar.gz
+
+CMake Build:
+  image: mickare/cmake-clang
+  stage: Compile
+  dependencies:
+    - Block3.T08G06.tar.gz
+  artifacts:
+    paths:
+      - build/
+  script:
+    - mkdir extract; cd extract
+    - tar -xzvf ../Block3.T08G06.tar.gz
+    - mkdir ../build; cd ../build
+    - cmake ../extract && make
+
+Correct Output Files:
+  stage: Output Files
+  dependencies:
+    - CMake Build
+  script:
+    - cd build
+    - ls client
+    - ls server
+
+Client SET:
+  stage: Test
+  image: python:3.7-stretch
+  dependencies:
+    - CMake Build
+  script:
+    - python3.7 ./test/sr.py -f ./test/services/client_set.service -a localhost -p 4711 -F ./build/client -A "localhost 4711 SET /data/random_binary *NBAV_)Q_JQ_MQ#@M(Q@_T@_J_JAV_Q_@%HAWET}YH"
+
+Client GET:
+  stage: Test
+  image: python:3.7-stretch
+  dependencies:
+    - CMake Build
+  script:
+    - python3.7 ./test/sr.py -f ./test/services/client_get.service -a localhost -p 4711 -F ./build/client -A "localhost 4711 GET /data/random_binary"
+
+Client DELETE:
+  stage: Test
+  image: python:3.7-stretch
+  dependencies:
+    - CMake Build
+  script:
+    - python3.7 ./test/sr.py -f ./test/services/client_delete.service -a localhost -p 4711 -F ./build/client -A "localhost 4711 DELETE /data/random_binary"
+
+Server:
+  stage: Test
+  image: python:3.7-stretch
+  dependencies:
+    - CMake Build
+  script:
+    - python3.7 ./test/sr.py -f ./test/services/server.service -a localhost -p 4711 -F ./build/server -A "4711"

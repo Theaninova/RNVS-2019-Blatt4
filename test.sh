@@ -1,0 +1,1 @@
+python3.7 ./test/sr.py -f ./test/services/server.service -a localhost -p 4712 -F ./cmake-build-debug/server -A "4712"
