@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 // #define DEBUG to enable logging
-// #define DEBUG
+#define DEBUG
 
 #define DEBUGGABLE_MAIN(argc, argv) int main(int argc, char *argv[]) { PREPARE_DEBUG();
 

@@ -6,7 +6,7 @@
 #include "data_helper.h"
 #include "../debug.h"
 
-void decode(const void *msg, struct DecodedData *data) {
+void decode_clientProtocol(const void *msg, struct ClientProtocol *data) {
     LOG("Decoding...");
 
     data->act = *((BYTE *) msg) MASK ACK_BIT;
@@ -31,14 +31,14 @@ void decode(const void *msg, struct DecodedData *data) {
     LOG("Finished decoding");
 }
 
-size_t decodedDataEncodedSize(struct DecodedData *data) {
+size_t clientProtocolCalculateSize(struct ClientProtocol *data) {
     return sizeof(BYTE) + sizeof(data->key_length) + sizeof(data->value_length) + data->key_length + data->value_length;
 }
 
-void *encode(struct DecodedData *data) {
+void *encode_clientProtocol(struct ClientProtocol *data) {
     LOG("Encoding...");
 
-    BYTE *msg = malloc(decodedDataEncodedSize(data));
+    BYTE *msg = malloc(clientProtocolCalculateSize(data));
 
     *msg = data->act COMBINE data->get COMBINE data->set COMBINE data->delete;
 

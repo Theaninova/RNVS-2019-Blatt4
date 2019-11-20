@@ -9,8 +9,8 @@
 NETWORK_RECEIVE_HANDLER(receive_handler, rec, sock_fd) {
     LOG("Parsing request");
 
-    struct DecodedData decodedData = {};
-    decode(rec->data, &decodedData);
+    struct ClientProtocol decodedData = {};
+    decode_clientProtocol(rec->data, &decodedData);
 
     if (decodedData.get) {
         LOG("[GET]");
@@ -30,9 +30,9 @@ NETWORK_RECEIVE_HANDLER(receive_handler, rec, sock_fd) {
         decodedData.value_length = element->value_length;
 
         decodedData.act = ACK_BIT;
-        size_t length = decodedDataEncodedSize(&decodedData);
+        size_t length = clientProtocolCalculateSize(&decodedData);
         LOG("Acknowledged");
-        send(sock_fd, encode(&decodedData), length);
+        send(sock_fd, encode_clientProtocol(&decodedData), length);
     }
     if (decodedData.set) {
         LOG("[SET]");

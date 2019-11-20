@@ -3,14 +3,15 @@
 #include "generic/data_helper.h"
 #include "debug.h"
 #include "generic/commander.h"
+#include "generic/smart_pointer.h"
 
 #define GET "GET"
 #define SET "SET"
 #define DELETE "DELETE"
 
 NETWORK_RECEIVE_HANDLER(receive_handler, rec, _sock_fd) {
-    struct DecodedData *decodedData = malloc(sizeof(struct DecodedData));
-    decode(rec->data, decodedData);
+    struct ClientProtocol *decodedData = malloc(sizeof(struct ClientProtocol));
+    decode_clientProtocol(rec->data, decodedData);
 
     if (decodedData->get) {
         fwrite(decodedData->value, decodedData->value_length, 1, stdout);
@@ -29,7 +30,7 @@ DEBUGGABLE_MAIN(argc, argv)
     STR_ARG(key, 3, "key")
     BINARY_ARG(value, value_length, 4)
 
-    struct DecodedData data = {};
+    struct ClientProtocol data = {};
     if (strcmp(method, GET) == 0) data.get = GET_BIT;
     else if (strcmp(method, SET) == 0) data.set = SET_BIT;
     else if (strcmp(method, DELETE) == 0) data.delete = DELETE_BIT;
@@ -46,8 +47,8 @@ DEBUGGABLE_MAIN(argc, argv)
         data.value = NULL;
     }
 
-    BYTE *encoded_data = encode(&data);
-    size_t encoded_data_len = decodedDataEncodedSize(&data);
+    BYTE *encoded_data = encode_clientProtocol(&data);
+    size_t encoded_data_len = clientProtocolCalculateSize(&data);
 
     int sock_fd = setup_as_client(address, port);
 

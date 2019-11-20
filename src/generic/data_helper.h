@@ -13,10 +13,14 @@
 #define SET_BIT (uint8_t) 0x40u
 #define DELETE_BIT (uint8_t) 0x80u
 
+#define CONTROL_BIT = 0x00u
+#define REPLY_BIT = 0x40u
+#define LOOKUP_BIT = 0x80u
+
 #define MASK &
 #define COMBINE +
 
-struct DecodedData {
+struct ClientProtocol {
     BOOL act;
     BOOL get;
     BOOL set;
@@ -27,13 +31,23 @@ struct DecodedData {
     const void *value;
 };
 
+typedef struct {
+    BOOL control;
+    BOOL reply;
+    BOOL lookup;
+    uint16_t hashId;
+    uint16_t nodeId;
+    uint32_t nodeIp;
+    uint16_t nodePort;
+} PeerProtocol;
+
 /**
  * Gets all parts from a binary message
  *
  * @param msg the binary message
  * @param data an empty pointer to the decoded data
  */
-void decode(const void *msg, struct DecodedData *data);
+void decode_peerProtocol(const void *msg, struct ClientProtocol *data);
 
 /**
  * Encodes a DecodedData message again to binary format
@@ -41,7 +55,7 @@ void decode(const void *msg, struct DecodedData *data);
  * @param data the DecodedData to encode
  * @return a pointer to the binary data
  */
-void *encode(struct DecodedData *data);
+void *encode_peerProtocol(struct ClientProtocol *data);
 
 /**
  * Calculates the total size of the data if it is encoded again
@@ -49,4 +63,28 @@ void *encode(struct DecodedData *data);
  * @param data the decoded data
  * @return the size of [data] if it is encoded again
  */
-size_t decodedDataEncodedSize(struct DecodedData *data);
+size_t peerProtocolCalculateSize(struct ClientProtocol *data);
+
+/**
+ * Gets all parts from a binary message
+ *
+ * @param msg the binary message
+ * @param data an empty pointer to the decoded data
+ */
+void decode_clientProtocol(const void *msg, struct ClientProtocol *data);
+
+/**
+ * Encodes a DecodedData message again to binary format
+ *
+ * @param data the DecodedData to encode
+ * @return a pointer to the binary data
+ */
+void *encode_clientProtocol(struct ClientProtocol *data);
+
+/**
+ * Calculates the total size of the data if it is encoded again
+ *
+ * @param data the decoded data
+ * @return the size of [data] if it is encoded again
+ */
+size_t clientProtocolCalculateSize(struct ClientProtocol *data);
