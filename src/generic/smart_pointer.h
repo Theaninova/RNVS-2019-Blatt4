@@ -29,24 +29,29 @@ do { \
 
 #define ASSIGN(to, name) \
 _##name->references++; \
-to = _##name;
+_##to = _##name;
 
 #define ABANDON(from) \
 SMART_FREE(from) \
-from = NULL;
+_##from = NULL;
 
 #define SMART_FREE(name) \
 if (--_##name->references == 0) free(_##name);
 
 #define PASS(name) _##name
 
-SmartPointer *var;
+#define SMART_POINTER(name) SmartPointer *_##name
 
-void test2(SmartPointer *_ptr) {
+
+// EXAMPLES
+
+SMART_POINTER(some_global);
+
+void test2(SMART_POINTER(ptr)) {
     USE(int, ptr, {
         *ptr = 8;
 
-        ASSIGN(var, ptr)
+        ASSIGN(some_global, ptr)
     })
 }
 
@@ -55,4 +60,6 @@ void test() {
         *pointer = 10;
         test2(PASS(pointer));
     })
+
+    ABANDON(some_global)
 }
