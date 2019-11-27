@@ -9,7 +9,7 @@
 NETWORK_RECEIVE_HANDLER(receive_handler, rec, sock_fd) {
     LOG("Parsing request");
 
-    struct ClientProtocol decodedData = {};
+    ClientProtocol decodedData = {};
     decode_clientProtocol(rec->data, &decodedData);
 
     if (decodedData.get) {
