@@ -58,7 +58,7 @@ NETWORK_RECEIVE_HANDLER(receive_handler, rec, sock_fd) {
 }
 
 DEBUGGABLE_MAIN(argc, argv)
-    STR_ARG(port, 0, "4711")
+    DEFAULT_STR_ARG(port, 0, "4711")
 
     LOG("Starting");
     int sock_fd = setup_as_server(port);

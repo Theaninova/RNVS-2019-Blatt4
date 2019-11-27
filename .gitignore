@@ -4,4 +4,5 @@ extract/
 build/
 .idea/
 Tut_*.txt
+*.pdf
 cmake-build-wsl_profile/

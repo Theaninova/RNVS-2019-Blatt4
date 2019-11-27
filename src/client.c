@@ -24,10 +24,10 @@ NETWORK_RECEIVE_HANDLER(receive_handler, rec, _sock_fd) {
 }
 
 DEBUGGABLE_MAIN(argc, argv)
-    STR_ARG(address, 0, "localhost")
-    STR_ARG(port, 1, "4711")
-    STR_ARG(method, 2, "GET")
-    STR_ARG(key, 3, "key")
+    DEFAULT_STR_ARG(address, 0, "localhost")
+    DEFAULT_STR_ARG(port, 1, "4711")
+    DEFAULT_STR_ARG(method, 2, "GET")
+    DEFAULT_STR_ARG(key, 3, "key")
     BINARY_ARG(value, value_length, 4)
 
     struct ClientProtocol data = {};
