@@ -6,25 +6,47 @@
 #include "debug.h"
 #include "generic/commander.h"
 
-NETWORK_RECEIVE_HANDLER(receive_handler, rec, sock_fd) {
+NETWORK_RECEIVE_HANDLER(receive_handler, rec, sock_fd, peerInfo) {
     LOG("Parsing request");
 
-    struct ClientProtocol decodedData = {};
-    decode_clientProtocol(rec->data, &decodedData);
-
-    //TODO: how implement more than one clientRequest
 
 
+
+    if (rec.isPeerProtocol()){
+        struct PeerProtocol decodedData = {};       //build PeerHeader
+        decode_peerProtocol(rec->data, &decodedData);
+
+        if(decodedData.lookup){
+            LOG(["LOOKUP"]);
+            if(lookup(decodedData, peerInfo)){ //if responsible
+                sendFoundLookup(decodedData);
+            } else {
+                sendLookup(peerInfo.nextPeer,decodedData); //else ask next one
+            }
+        } else if(decodedData.reply){ //if lookup answer
+            request(decodedData,decodedData.length); //get data
+        } else {
+            ERROR("false Request"));
+        }
+    } else{ //ClientProtocol
+        struct ClientProtocol decodedData = {};
+        decode_clientProtocol(rec->data, &decodedData);
+        if(isResponsibleforHash(decodedData)){
+            send(sock_fd, proceedRequest(decodedData), proceedRequest(decodedData).length);
+        } else {
+            sendLookup(peerInfo.nextPeer,buildPeerProtocpl(decodedData));
+        }
+    }
+}
+
+
+
+        //TODO: how implement more than one clientRequest
     //TODO create hashHead
-
     //TODO call lookup(hashValue)
-
     //TODO request to peer
-
     //TODO answer to peer
-
     //TODO answer to client
-
     /*
     check protocolBIT (controlBIT 1 or 0)
         if !isPeerProtocol():
