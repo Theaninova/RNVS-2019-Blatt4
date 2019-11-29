@@ -35,4 +35,4 @@ add_executable(peer
         src/generic/hash_helper.c
         src/generic/data_helper.c
         src/debug.h
-        src/generic/commander.h)
+        src/generic/commander.h src/generic/peer_lookup.c src/generic/peer_lookup.h)

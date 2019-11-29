@@ -25,7 +25,6 @@ NETWORK_RECEIVE_HANDLER(receive_handler, rec, sock_fd) {
 
 
 
-
     if (isPeerProtocol(rec)){
         PeerProtocol decodedData = {};       //build PeerHeader
         decode_peerProtocol(rec->data, &decodedData);
