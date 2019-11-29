@@ -6,24 +6,41 @@
 #include "debug.h"
 #include "generic/commander.h"
 
-NETWORK_RECEIVE_HANDLER(receive_handler, rec, sock_fd, peerInfo) {
+typedef struct{
+    uint32_t ip;
+    uint16_t id;
+    uint16_t port;
+} Peer;
+
+typedef struct {
+    Peer this;
+    Peer next;
+    Peer prev;
+} PeerInfo;
+
+const PeerInfo peer_info;
+
+NETWORK_RECEIVE_HANDLER(receive_handler, rec, sock_fd) {
     LOG("Parsing request");
 
 
 
 
-    if (rec.isPeerProtocol()){
-        struct PeerProtocol decodedData = {};       //build PeerHeader
+    if (isPeerProtocol(rec)){
+        PeerProtocol decodedData = {};       //build PeerHeader
         decode_peerProtocol(rec->data, &decodedData);
 
         if(decodedData.lookup){
             LOG(["LOOKUP"]);
-            if(lookup(decodedData, peerInfo)){ //if responsible
-                sendFoundLookup(decodedData);
+            if(lookup_is_Responsible(decodedData, peer_info.this, peer_info.prev)) { //if thisIsResponsible or nextIsResponsible
+                sendFoundLookup(decodedData, peer_info.this); //setReplyBit setThisHashProtocol
+            } else if (lookup_is_Responsible(decodedData, peer_info.next, peer_info.this)){
+                sendFoundLookup(decodedData, peer_info.next);
             } else {
-                sendLookup(peerInfo.nextPeer,decodedData); //else ask next one
+                sendLookupRequest(decodedData, peer_info.next); //else ask next one
             }
-        } else if(decodedData.reply){ //if lookup answer
+        } else if(decodedData.reply){ //is lookup answer
+            decodedData = peer_to_hash_Protocol(decodedData);
             request(decodedData,decodedData.length); //get data
         } else {
             ERROR("false Request"));
