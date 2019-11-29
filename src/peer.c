@@ -6,25 +6,63 @@
 #include "debug.h"
 #include "generic/commander.h"
 
+typedef struct{
+    uint32_t ip;
+    uint16_t id;
+    uint16_t port;
+} Peer;
+
+typedef struct {
+    Peer this;
+    Peer next;
+    Peer prev;
+} PeerInfo;
+
+const PeerInfo peer_info;
+
 NETWORK_RECEIVE_HANDLER(receive_handler, rec, sock_fd) {
     LOG("Parsing request");
 
-    ClientProtocol decodedData = {};
-    decode_clientProtocol(rec->data, &decodedData);
-
-    //TODO: how implement more than one clientRequest
 
 
+    if (isPeerProtocol(rec)){
+        PeerProtocol decodedData = {};       //build PeerHeader
+        decode_peerProtocol(rec->data, &decodedData);
+
+        if(decodedData.lookup){
+            LOG(["LOOKUP"]);
+            if(lookup_is_Responsible(decodedData, peer_info.this, peer_info.prev)) { //if thisIsResponsible or nextIsResponsible
+                sendFoundLookup(decodedData, peer_info.this); //setReplyBit setThisHashProtocol
+            } else if (lookup_is_Responsible(decodedData, peer_info.next, peer_info.this)){
+                sendFoundLookup(decodedData, peer_info.next);
+            } else {
+                sendLookupRequest(decodedData, peer_info.next); //else ask next one
+            }
+        } else if(decodedData.reply){ //is lookup answer
+            decodedData = peer_to_hash_Protocol(decodedData);
+            request(decodedData,decodedData.length); //get data
+        } else {
+            ERROR("false Request"));
+        }
+    } else{ //ClientProtocol
+        struct ClientProtocol decodedData = {};
+        decode_clientProtocol(rec->data, &decodedData);
+        if(isResponsibleforHash(decodedData)){
+            send(sock_fd, proceedRequest(decodedData), proceedRequest(decodedData).length);
+        } else {
+            sendLookup(peerInfo.nextPeer,buildPeerProtocpl(decodedData));
+        }
+    }
+}
+
+
+
+        //TODO: how implement more than one clientRequest
     //TODO create hashHead
-
     //TODO call lookup(hashValue)
-
     //TODO request to peer
-
     //TODO answer to peer
-
     //TODO answer to client
-
     /*
     check protocolBIT (controlBIT 1 or 0)
         if !isPeerProtocol():
