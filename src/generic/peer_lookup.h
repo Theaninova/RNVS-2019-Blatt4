@@ -16,4 +16,4 @@ typedef struct {
  * @param prev the previous peer
  * @return whether the peer is responsible
  */
-BOOL lookup_is_responsible(PeerProtocol decodedData, Peer this, Peer prev);
+BOOL lookup_is_responsible(uint16_t hash_id, Peer this, Peer prev);
