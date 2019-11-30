@@ -6,7 +6,51 @@
 #include "data_helper.h"
 #include "../debug.h"
 
-void decode_clientProtocol(const void *msg, struct ClientProtocol *data) {
+// by using the packed attribute the compiler will not insert any data between or around the struct when in memory for
+// optimization. That means that we can layout the data structure that we have for the network protocol in a struct
+// and then just access the individual attributes and automatically get the correct positions
+typedef struct __attribute__((packed)) {
+    BYTE header;
+    uint16_t hashID;
+    uint16_t nodeID;
+    uint32_t nodeIP;
+    uint16_t nodePort;
+} RawPeerProtocol;
+
+void decode_peerProtocol(const void *msg, PeerProtocol *data) {
+    RawPeerProtocol *raw = (RawPeerProtocol *) msg;
+
+    data->control = raw->header MASK CONTROL_BIT;
+    data->reply = raw->header MASK REPLY_BIT;
+    data->lookup = raw->header MASK LOOKUP_BIT;
+
+    data->hashId = raw->hashID;
+    data->nodeId = raw->nodeID;
+    data->nodeIp = raw->nodeIP;
+    data->nodePort = raw->nodePort;
+}
+
+size_t peerProtocolCalculateSize(PeerProtocol *data) {
+    return sizeof(RawPeerProtocol);
+}
+
+void *encode_peerProtocol(PeerProtocol *data) {
+    RawPeerProtocol *msg = calloc(peerProtocolCalculateSize(data), 1);
+
+    msg->header = data->control COMBINE data->reply COMBINE data->lookup;
+    msg->hashID = data->hashId;
+    msg->nodeID = data->nodeId;
+    msg->nodeIP = data->nodeIp;
+    msg->nodePort = data->nodePort;
+
+    return msg;
+}
+
+BOOL isPeerProtocol(void *msg) {
+    return *((BYTE *) msg) MASK CONTROL_BIT;
+}
+
+void decode_clientProtocol(const void *msg, ClientProtocol *data) {
     LOG("Decoding...");
 
     data->act = *((BYTE *) msg) MASK ACK_BIT;
@@ -31,14 +75,14 @@ void decode_clientProtocol(const void *msg, struct ClientProtocol *data) {
     LOG("Finished decoding");
 }
 
-size_t clientProtocolCalculateSize(struct ClientProtocol *data) {
+size_t clientProtocolCalculateSize(ClientProtocol *data) {
     return sizeof(BYTE) + sizeof(data->key_length) + sizeof(data->value_length) + data->key_length + data->value_length;
 }
 
-void *encode_clientProtocol(struct ClientProtocol *data) {
+void *encode_clientProtocol(ClientProtocol *data) {
     LOG("Encoding...");
 
-    BYTE *msg = malloc(clientProtocolCalculateSize(data));
+    BYTE *msg = calloc(clientProtocolCalculateSize(data), 1);
 
     *msg = data->act COMBINE data->get COMBINE data->set COMBINE data->delete;
 
@@ -53,8 +97,4 @@ void *encode_clientProtocol(struct ClientProtocol *data) {
 
     LOG("Finished encoding");
     return msg;
-}
-
-BOOL isPeerProtocol(void *msg) {
-    return *((BYTE *) msg) MASK CONTROL_BIT;
 }

@@ -9,7 +9,7 @@
 #define DELETE "DELETE"
 
 NETWORK_RECEIVE_HANDLER(receive_handler, rec, _sock_fd) {
-    struct ClientProtocol *decodedData = malloc(sizeof(struct ClientProtocol));
+    ClientProtocol *decodedData = malloc(sizeof(ClientProtocol));
     decode_clientProtocol(rec->data, decodedData);
 
     if (decodedData->get) {
@@ -23,13 +23,13 @@ NETWORK_RECEIVE_HANDLER(receive_handler, rec, _sock_fd) {
 }
 
 DEBUGGABLE_MAIN(argc, argv)
-    STR_ARG(address, 0, "localhost")
-    STR_ARG(port, 1, "4711")
-    STR_ARG(method, 2, "GET")
-    STR_ARG(key, 3, "key")
+    DEFAULT_STR_ARG(address, 0, "localhost")
+    DEFAULT_STR_ARG(port, 1, "4711")
+    DEFAULT_STR_ARG(method, 2, "GET")
+    DEFAULT_STR_ARG(key, 3, "key")
     BINARY_ARG(value, value_length, 4)
 
-    struct ClientProtocol data = {};
+    ClientProtocol data = {};
     if (strcmp(method, GET) == 0) data.get = GET_BIT;
     else if (strcmp(method, SET) == 0) data.set = SET_BIT;
     else if (strcmp(method, DELETE) == 0) data.delete = DELETE_BIT;

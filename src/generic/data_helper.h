@@ -8,19 +8,19 @@
 #define BYTE uint8_t
 #define BOOL BYTE
 
-#define ACK_BIT (uint8_t) (0x01u << 4)
-#define GET_BIT (uint8_t) (0x01u << 5)
-#define SET_BIT (uint8_t) (0x01u << 6)
-#define DELETE_BIT (uint8_t) (0x01u << 7)
+#define ACK_BIT ((uint8_t) (0x01u << 4u))
+#define GET_BIT ((uint8_t) (0x01u << 5u))
+#define SET_BIT ((uint8_t) (0x01u << 6u))
+#define DELETE_BIT ((uint8_t) (0x01u << 7u))
 
-#define CONTROL_BIT (0x01u << 0)
-#define REPLY_BIT (0x01u << 6)
-#define LOOKUP_BIT (0x01u << 7)
+#define CONTROL_BIT (0x01u << 0u)
+#define REPLY_BIT (0x01u << 6u)
+#define LOOKUP_BIT (0x01u << 7u)
 
 #define MASK &
 #define COMBINE +
 
-struct ClientProtocol {
+typedef struct {
     BOOL act;
     BOOL get;
     BOOL set;
@@ -29,7 +29,7 @@ struct ClientProtocol {
     uint32_t value_length;
     const void *key;
     const void *value;
-};
+} ClientProtocol;
 
 typedef struct {
     BOOL control;
@@ -55,7 +55,7 @@ BOOL isPeerProtocol(void *msg);
  * @param msg the binary message
  * @param data an empty pointer to the decoded data
  */
-void decode_peerProtocol(const void *msg, struct ClientProtocol *data);
+void decode_peerProtocol(const void *msg, PeerProtocol *data);
 
 /**
  * Encodes a DecodedData message again to binary format
@@ -63,7 +63,7 @@ void decode_peerProtocol(const void *msg, struct ClientProtocol *data);
  * @param data the DecodedData to encode
  * @return a pointer to the binary data
  */
-void *encode_peerProtocol(struct ClientProtocol *data);
+void *encode_peerProtocol(PeerProtocol *data);
 
 /**
  * Calculates the total size of the data if it is encoded again
@@ -71,7 +71,7 @@ void *encode_peerProtocol(struct ClientProtocol *data);
  * @param data the decoded data
  * @return the size of [data] if it is encoded again
  */
-size_t peerProtocolCalculateSize(struct ClientProtocol *data);
+size_t peerProtocolCalculateSize(PeerProtocol *data);
 
 /**
  * Gets all parts from a binary message
@@ -79,7 +79,7 @@ size_t peerProtocolCalculateSize(struct ClientProtocol *data);
  * @param msg the binary message
  * @param data an empty pointer to the decoded data
  */
-void decode_clientProtocol(const void *msg, struct ClientProtocol *data);
+void decode_clientProtocol(const void *msg, ClientProtocol *data);
 
 /**
  * Encodes a DecodedData message again to binary format
@@ -87,7 +87,7 @@ void decode_clientProtocol(const void *msg, struct ClientProtocol *data);
  * @param data the DecodedData to encode
  * @return a pointer to the binary data
  */
-void *encode_clientProtocol(struct ClientProtocol *data);
+void *encode_clientProtocol(ClientProtocol *data);
 
 /**
  * Calculates the total size of the data if it is encoded again
@@ -95,4 +95,4 @@ void *encode_clientProtocol(struct ClientProtocol *data);
  * @param data the decoded data
  * @return the size of [data] if it is encoded again
  */
-size_t clientProtocolCalculateSize(struct ClientProtocol *data);
+size_t clientProtocolCalculateSize(ClientProtocol *data);
