@@ -3,7 +3,6 @@
 #include "generic/data_helper.h"
 #include "debug.h"
 #include "generic/commander.h"
-#include "generic/smart_pointer.h"
 
 #define GET "GET"
 #define SET "SET"
