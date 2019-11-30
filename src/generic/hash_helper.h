@@ -2,6 +2,7 @@
 
 #include <string.h>
 #include "../libraries/uthash.h"
+#include "wulkanat/helper/descriptive_types.h"
 
 struct HashElement {
     void *key;
@@ -40,3 +41,13 @@ struct HashElement* get(const void *key, uint16_t key_len);
  * @param key_len the length of the key
  */
 void delete_element(const void *key, uint16_t key_len);
+
+
+/**
+ * Gets the hash value of the key
+ *
+ * @param key the key to hash
+ * @param key_len the length of the key
+ * @return the hash of the key
+ */
+byte32 get_hash_value(val unknown *key, byte16 key_len);
