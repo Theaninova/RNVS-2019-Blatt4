@@ -5,9 +5,9 @@
 #include "wulkanat/helper/descriptive_types.h"
 
 struct HashElement {
-    void *key;
-    void *value;
-    uint32_t value_length;
+    unknown *key;
+    unknown *value;
+    byte32 value_length;
     UT_hash_handle hh;
 };
 
@@ -21,7 +21,7 @@ struct HashElement {
  * @param value the value of the element
  * @param value_length the length of the value
  */
-void set(const void *key, uint16_t key_len, const void *value, uint32_t value_length);
+void set(val unknown *key, byte16 key_len, val unknown *value, byte32 value_length);
 
 /**
  * Retreives an element from the hash table
@@ -30,7 +30,7 @@ void set(const void *key, uint16_t key_len, const void *value, uint32_t value_le
  * @param key_len the length of the key
  * @return a pointer to the element
  */
-struct HashElement* get(const void *key, uint16_t key_len);
+struct HashElement* get(val unknown *key, byte16 key_len);
 
 /**
  * Deletes an element from the hash table
@@ -40,7 +40,7 @@ struct HashElement* get(const void *key, uint16_t key_len);
  * @param key the key of the element
  * @param key_len the length of the key
  */
-void delete_element(const void *key, uint16_t key_len);
+void delete_element(val unknown *key, byte16 key_len);
 
 
 /**
