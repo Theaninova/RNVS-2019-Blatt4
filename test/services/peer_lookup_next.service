@@ -1,12 +1,15 @@
-^!
-40
-00 07
-00 00 00 0A
-44 61 74 61 4b 65 79
-53 6f 6d 65 20 56 61 6c 75 65
+Sends a lookup for ID 17 and expects the address 171.205.239.18 (AB.CD.EF.12 HEX) at port 13398 and ID 20 as a node returned
+:^!
+81
+00 11
+00 01
+7F 00 00 01
+0B B8
 >
-50
-00 00
-00 00 00 00
+41
+00 14
+00 05
+AB CD EF 12
+34 56
 <
 %

@@ -35,8 +35,14 @@ def main(argv):
     contents = f.read()
 
     data = ''
+    read = False
 
     for char in contents:
+        if (not read) and char == ':':
+            read = True
+            continue
+        elif not read:
+            continue
         if char == '>':
             byte_data = bytes.fromhex(data)
             send(sock, byte_data, process)

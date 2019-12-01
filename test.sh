@@ -1,1 +1,1 @@
-python3.7 ./test/sr.py -f ./test/services/server.service -a localhost -p 4712 -F ./cmake-build-debug/server -A "4712"
+python3.7 ./test/sr.py -f ./test/services/peer_lookup_next.service -a localhost -p 3000 -F ./build/peer -A "15 127.0.0.1 4711 10 127.0.0.1 3000 20 127.0.0.1 3000"

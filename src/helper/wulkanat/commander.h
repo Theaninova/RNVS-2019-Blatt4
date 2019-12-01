@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../debug.h"
+#include "debug.h"
 
 #define DEFAULT_STR_ARG(name, pos, default_value) \
     char* name; \

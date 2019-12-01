@@ -36,4 +36,5 @@ add_executable(peer
         src/helper/wulkanat/queue.h
         src/helper/wulkanat/descriptive_types.h
 
-        src/helper/maxtreme/extended_math.h)
+        src/helper/max/extended_math.h
+        src/helper/max/extended_math.c)

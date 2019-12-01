@@ -34,37 +34,28 @@ Correct Output Files:
     - CMake Build
   script:
     - cd build
-    - ls client
-    - ls server
+    - ls peer
 
-Client SET:
+Peer Hash Implementation:
   stage: Test
   image: python:3.7-stretch
   dependencies:
     - CMake Build
   script:
-    - python3.7 ./test/sr.py -f ./test/services/client_set.service -a localhost -p 4711 -F ./build/client -A "localhost 4711 SET /data/random_binary *NBAV_)Q_JQ_MQ#@M(Q@_T@_J_JAV_Q_@%HAWET}YH"
+    - python3.7 ./test/sr.py -f ./test/services/peer_client_request_this_full.service -a localhost -p 3000 -F ./build/peer -A "15 127.0.0.1 4711 10 127.0.0.1 3000 20 127.0.0.1 3000"
 
-Client GET:
+Peer Lookup Next:
   stage: Test
   image: python:3.7-stretch
   dependencies:
     - CMake Build
   script:
-    - python3.7 ./test/sr.py -f ./test/services/client_get.service -a localhost -p 4711 -F ./build/client -A "localhost 4711 GET /data/random_binary"
+    - python3.7 ./test/sr.py -f ./test/services/peer_lookup_next.service -a localhost -p 3000 -F ./build/peer -A "15 127.0.0.1 4711 10 127.0.0.1 3000 20 127.0.0.1 3000"
 
-Client DELETE:
+Peer Lookup Other:
   stage: Test
   image: python:3.7-stretch
   dependencies:
     - CMake Build
   script:
-    - python3.7 ./test/sr.py -f ./test/services/client_delete.service -a localhost -p 4711 -F ./build/client -A "localhost 4711 DELETE /data/random_binary"
-
-Server:
-  stage: Test
-  image: python:3.7-stretch
-  dependencies:
-    - CMake Build
-  script:
-    - python3.7 ./test/sr.py -f ./test/services/server.service -a localhost -p 4711 -F ./build/server -A "4711"
+    - python3.7 ./test/sr.py -f ./test/services/peer_lookup_other.service -a localhost -p 3000 -F ./build/peer -A "15 127.0.0.1 4711 10 127.0.0.1 3000 20 127.0.0.1 3000"
