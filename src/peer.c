@@ -8,17 +8,10 @@
 #include "generic/peer_lookup.h"
 #include "generic/queue.h"
 
-typedef struct {
-    Peer this;
-    Peer next;
-    Peer prev;
-} PeerInfo;
-
 QUEUE(client_requests, PeerProtocol);
 QUEUE(sockets, int32);
 
 const PeerInfo peer_info;
-
 
 void peer_hash_handler(ClientProtocol decodedData,int sock_fd) {
     LOG("Parsing request");
