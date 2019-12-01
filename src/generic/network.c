@@ -1,4 +1,3 @@
-#include "../debug.h"
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
@@ -10,14 +9,15 @@
 #include <sys/wait.h>
 #include <signal.h>
 #include "network.h"
+#include "../helper/wulkanat/debug.h"
 
 #define BACKLOG 10     // how many pending connections queue will hold
 
-void sigchld_handler(int s) {
+void sigchld_handler(int32 s) {
     (void) s; // quiet unused variable warning
 
     // waitpid() might overwrite errno, so we save and restore it:
-    int saved_errno = errno;
+    int32 saved_errno = errno;
 
     while (waitpid(-1, NULL, WNOHANG) > 0);
 
@@ -34,13 +34,12 @@ void *get_in_addr(struct sockaddr *sa) {
     return &(((struct sockaddr_in6 *) sa)->sin6_addr);
 }
 
-int setup_as_client(char *addr, char *port) {
-    int
-        sock_fd = -1,
-        rv;
-    struct addrinfo hints;
-    struct addrinfo *servinfo;
-    struct addrinfo *p;
+int32 setup_as_client(string addr, string port) {
+    int32 sock_fd = -1;
+    int32 rv;
+    AddressInfo hints;
+    AddressInfo *server_info;
+    AddressInfo *p;
     char s[INET6_ADDRSTRLEN];
 
     //define hints
@@ -48,13 +47,13 @@ int setup_as_client(char *addr, char *port) {
     hints.ai_family = AF_UNSPEC; //IPv4 or IPv6
     hints.ai_socktype = SOCK_STREAM; //TCP Protocol
 
-    if ((rv = getaddrinfo(addr, port, &hints, &servinfo)) != 0) {
+    if ((rv = getaddrinfo(addr, port, &hints, &server_info)) != 0) {
         ERROR("Malformed address or port");
         return -1;
     }
 
     // loop through all the results and connect to the first we can
-    for(p = servinfo; p != NULL; p = p->ai_next) {
+    for(p = server_info; p != NULL; p = p->ai_next) {
         if ((sock_fd = socket(p->ai_family, p->ai_socktype,
                              p->ai_protocol)) == -1) {
             WARN("(CONNECTIONS) Socket is -1");
@@ -79,16 +78,18 @@ int setup_as_client(char *addr, char *port) {
     inet_ntop(p->ai_family, get_in_addr(p->ai_addr),
               s, sizeof s);
 
-    freeaddrinfo(servinfo);
+    freeaddrinfo(server_info);
 
     return sock_fd;
 }
 
-int setup_as_server(char *port) {
-    int sock_fd;  // listen on sock_fd, new connection on new_fd
-    struct addrinfo hints, *servinfo, *p;
+int32 setup_as_server(string port) {
+    int32 sock_fd;  // listen on sock_fd, new connection on new_fd
+    AddressInfo hints;
+    AddressInfo *server_info;
+    AddressInfo *p;
     struct sigaction sa;
-    const int yes = 1;
+    val int32 yes = 1;
 
     //check Port
     if (atoi(port) < 0 || atoi(port) > 65535) {
@@ -101,14 +102,14 @@ int setup_as_server(char *port) {
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_PASSIVE; // use my IP
 
-    int rv;
-    if ((rv = getaddrinfo(NULL, port, &hints, &servinfo)) != 0) {
+    int32 rv;
+    if ((rv = getaddrinfo(NULL, port, &hints, &server_info)) != 0) {
         ERROR("Could not get Address");
         return -1;
     }
 
     // loop through all the results and bind to the first we can
-    for (p = servinfo; p != NULL; p = p->ai_next) {
+    for (p = server_info; p != NULL; p = p->ai_next) {
         if ((sock_fd = socket(p->ai_family, p->ai_socktype,
                               p->ai_protocol)) == -1) {
             WARN("(CONNECTIONS) Connection Failed to connect");
@@ -131,7 +132,7 @@ int setup_as_server(char *port) {
         break;
     }
 
-    freeaddrinfo(servinfo); // all done with this structure
+    freeaddrinfo(server_info); // all done with this structure
 
     if (p == NULL) {
         ERROR("Failed to bind on Port");
@@ -152,8 +153,8 @@ int setup_as_server(char *port) {
         return -1;
     }
 
-    struct sockaddr_storage their_addr;
-    char* s;
+    AddressInfoStorage their_addr;
+    string s;
 
     size_t sin_size = sizeof(their_addr);
     int new_fd;
@@ -169,8 +170,8 @@ int setup_as_server(char *port) {
     return new_fd;
 }
 
-int receive(int sock_fd, NETWORK_RECEIVE_FNPTR(callback)) {
-    struct Response response = {};
+int32 receive(int32 sock_fd, NETWORK_RECEIVE_FNPTR(callback)) {
+    Response response = {};
 
     char buffer[BUFFER_SIZE];
     // int number_of_bytes;
@@ -199,8 +200,8 @@ int receive(int sock_fd, NETWORK_RECEIVE_FNPTR(callback)) {
         LOG("Socket Closed");
         return STATUS_SOCKET_CLOSED;
     }
-    LOG_INT((int) total_number_of_bytes);
-    LOG_INT((int) total_number_of_bytes);
+    LOG_INT((int32) total_number_of_bytes);
+    LOG_INT((int32) total_number_of_bytes);
     response.data = malloc(total_number_of_bytes);
     memcpy(response.data, buffer, total_number_of_bytes);
     response.data_length = total_number_of_bytes;

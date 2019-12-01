@@ -1,6 +1,6 @@
 #include <string.h>
 #include "hash_helper.h"
-#include "../debug.h"
+#include "../helper/wulkanat/debug.h"
 
 struct HashElement *hash_table_head = NULL; //declare the Hash
 
