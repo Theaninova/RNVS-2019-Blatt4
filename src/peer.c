@@ -172,7 +172,7 @@ void grab_data_to_peer_info(int32 argc, string argv[]) {
 
     STR_ARG(prevID, 6)
     STR_ARG(prevIP, 7)
-    STR_ARG(prevPORT, 9)
+    STR_ARG(prevPORT, 8)
     str_addr_to_int(prevAddrInt, prevIP)
     str_port_to_int(prevPortInt, prevPORT)
     peer_info.prev.ip = prevAddrInt;
@@ -186,6 +186,7 @@ DEBUGGABLE_MAIN(argc, argv)
     STR_ARG(myPORT, 2)
 
     LOG("Starting Peer");
+    LOG_STR(myPORT);
     int sock_fd = setup_as_server(myPORT);
 
     loop {

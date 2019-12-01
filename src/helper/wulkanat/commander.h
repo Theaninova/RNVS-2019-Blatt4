@@ -27,7 +27,7 @@
 
 #define STR_ARG(name, pos) \
     char* name; \
-    if (argc <= pos + 1) { \
+    if (argc < pos + 1) { \
         ERROR("input not correct. Please check again and retry"); \
         THROW(-1) \
     } else { \

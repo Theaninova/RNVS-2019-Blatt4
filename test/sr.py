@@ -12,38 +12,68 @@ import time
 
 
 def main(argv):
-    opts, args = getopt.getopt(argv, "f:a:p:F:A:", ["file=", "address=", "port=", "program_path=", "program_args="])
+    opts, args = getopt.getopt(argv, "f:", ["file="])
 
     input_file = ''
-    address = 'localhost'
-    port = '4711'
     p_args = ''
     program_path = ''
     for opt, arg in opts:
         if opt in ("-f", "--file"):
             input_file = arg
-        elif opt in ("-F", "--program_path"):
-            program_path = arg
-        elif opt in ("-a", "--address"):
-            address = arg
-        elif opt in ("-p", "--port"):
-            port = int(arg)
-        elif opt in ("-A", "--program_args"):
-            p_args = arg
 
     f = open(input_file, "r")
     contents = f.read()
 
+    socket_data_list = []
+
     data = ''
-    read = False
+    comment = True
+    read_new_socket_data = False
+    read_program_args = False
+    current_socket_data = -1
 
     for char in contents:
-        if (not read) and char == ':':
-            read = True
+        if comment and char == ':':
+            data = ''
+            comment = False
             continue
-        elif not read:
+        elif comment:
             continue
-        if char == '>':
+
+        if read_new_socket_data:
+            if char == ']':
+                socket_data = data.split('|')
+                if len(socket_data) == 1:
+                    if current_socket_data != -1:
+                        socket_data_list[current_socket_data][0] = sock
+                    sock = socket_data_list[int(socket_data[0])][0]
+                    address = socket_data_list[int(socket_data[0])][1]
+                    port = socket_data_list[int(socket_data[0])][2]
+                    current_socket_data = int(socket_data[0])
+                else:
+                    socket_data_list.insert(int(socket_data[0]), (None, socket_data[1], int(socket_data[2])))
+                    address = socket_data_list[int(socket_data[0])][1]
+                    port = socket_data_list[int(socket_data[0])][2]
+                data = ''
+                read_new_socket_data = False
+            else:
+                data += char
+        elif read_program_args:
+            if char == '}':
+                program_data = data.split('|')
+                program_path = program_data[0]
+                p_args = program_data[1]
+                data = ''
+                read_program_args = False
+            else:
+                data += char
+        elif char == '[':
+            data = ''
+            read_new_socket_data = True
+        elif char == '{':
+            data = ''
+            read_program_args = True
+        elif char == '>':
             byte_data = bytes.fromhex(data)
             send(sock, byte_data, process)
             data = ''
@@ -55,7 +85,7 @@ def main(argv):
             sock = setup_server_accept(sock)
         elif char == '^':
             log(f"Starting the Application with arguments '{p_args}'")
-            process = subprocess.Popen(f"{program_path} {p_args}".split(), stdout=subprocess.PIPE)
+            process = subprocess.Popen(f"{program_path} {p_args}".split()) #, stdout=subprocess.PIPE
             time.sleep(1)
         elif char == '%':
             log("Closing connection")
