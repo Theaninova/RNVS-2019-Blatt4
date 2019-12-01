@@ -1,38 +1,39 @@
 cmake_minimum_required(VERSION 3.5.1)
-project(Blatt3)
+project(Blatt4)
 
-set(CMAKE_CXX_STANDARD 99)
+set(CMAKE_C_STANDARD 99)
 
 add_executable(client
         src/client.c
-        src/libraries/uthash.h
+
         src/generic/hash_helper.h
-        src/generic/data_helper.h
+        src/generic/hash_helper.c
         src/generic/network.h
         src/generic/network.c
-        src/generic/hash_helper.c
-        src/generic/data_helper.c
-        src/debug.h
-        src/generic/commander.h)
-add_executable(server
-        src/server.c
-        src/libraries/uthash.h
-        src/generic/hash_helper.h
         src/generic/data_helper.h
-        src/generic/network.h
-        src/generic/network.c
-        src/generic/hash_helper.c
         src/generic/data_helper.c
-        src/debug.h
-        src/generic/commander.h)
+
+        src/libraries/uthash.h
+
+        src/helper/wulkanat/commander.h
+        src/helper/wulkanat/debug.h
+        src/helper/wulkanat/queue.h
+        src/helper/wulkanat/descriptive_types.h)
 add_executable(peer
         src/peer.c
-        src/libraries/uthash.h
+
         src/generic/hash_helper.h
-        src/generic/data_helper.h
+        src/generic/hash_helper.c
         src/generic/network.h
         src/generic/network.c
-        src/generic/hash_helper.c
+        src/generic/data_helper.h
         src/generic/data_helper.c
-        src/debug.h
-        src/generic/commander.h src/generic/peer_lookup.c src/generic/peer_lookup.h src/generic/network_peer_handler.h src/generic/queue.h)
+
+        src/libraries/uthash.h
+
+        src/helper/wulkanat/commander.h
+        src/helper/wulkanat/debug.h
+        src/helper/wulkanat/queue.h
+        src/helper/wulkanat/descriptive_types.h
+
+        src/helper/maxtreme/extended_math.h)
