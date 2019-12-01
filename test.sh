@@ -1,1 +1,1 @@
-python3.7 ./test/sr.py -f ./test/services/peer_lookup_other.service
+python3.7 ./test/sr.py -f ./test/services/peer_client_full_cycle.service

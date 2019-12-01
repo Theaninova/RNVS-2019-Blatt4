@@ -127,7 +127,10 @@ NETWORK_RECEIVE_HANDLER(receive_handler, rec, sock_fd) {
         ClientProtocol decodedData = {};
         decode_clientProtocol(rec->data, &decodedData);
 
-        int16 hashId = get_hash_value(decodedData.key, decodedData.key_length);
+        byte16 hashId = get_hash_value(decodedData.key, decodedData.key_length);
+        LOG_BYTE(hashId);
+        LOG_BYTE(peer_info.this.id);
+
         if (lookup_is_responsible(hashId, peer_info.this, peer_info.prev)) {
             // this peer is responsible
             LOG("This peer is responsible");
@@ -169,7 +172,7 @@ void grab_data_to_peer_info(int32 argc, string argv[]) {
     str_port_to_int(myPortInt, myPORT)
     peer_info.this.ip = myAddrInt;
     peer_info.this.port = myPortInt;
-    peer_info.this.id = atoi(myID);
+    peer_info.this.id = (byte16) atoi(myID);
 
     STR_ARG(nextID, 3)
     STR_ARG(nextIP, 4)
@@ -178,7 +181,7 @@ void grab_data_to_peer_info(int32 argc, string argv[]) {
     str_port_to_int(nextPortInt, nextPORT)
     peer_info.next.ip = nextAddrInt;
     peer_info.next.port = nextPortInt;
-    peer_info.next.id = atoi(nextID);
+    peer_info.next.id = (byte16) atoi(nextID);
 
     STR_ARG(prevID, 6)
     STR_ARG(prevIP, 7)
@@ -187,7 +190,7 @@ void grab_data_to_peer_info(int32 argc, string argv[]) {
     str_port_to_int(prevPortInt, prevPORT)
     peer_info.prev.ip = prevAddrInt;
     peer_info.prev.port = prevPortInt;
-    peer_info.prev.id = atoi(prevID);
+    peer_info.prev.id = (byte16) atoi(prevID);
 }
 #pragma clang diagnostic pop
 
@@ -209,7 +212,7 @@ DEBUGGABLE_MAIN(argc, argv)
             LOG("Connection terminated by client.");
         } else {
             ERROR("Error while connecting");
-            THROW(-1)
+            // THROW(-1)
         }
     }
 }

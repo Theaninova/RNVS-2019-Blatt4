@@ -1,5 +1,9 @@
-Does all kinds of stuff to data and expects things
-:^!
+Data is in the next node
+Sends all possible valid client requests and expects data out
+:
+{./build/peer|25000 127.0.0.1 3005 30000 127.0.0.1 3006 20000 127.0.0.1 3004}
+[0|localhost|3005]
+^!
 40
 00 07
 00 00 00 0A
@@ -9,7 +13,7 @@ Does all kinds of stuff to data and expects things
 50
 00 00
 00 00 00 00
-<
+<%!
 40
 00 07
 00 00 00 0A
@@ -19,7 +23,7 @@ Does all kinds of stuff to data and expects things
 50
 00 00
 00 00 00 00
-<
+<%!
 20
 00 07
 00 00 00 00
@@ -30,7 +34,7 @@ Does all kinds of stuff to data and expects things
 00 00 00 0A
 44 61 74 61 4b 65 79
 53 6f 6d 65 20 56 61 6c 75 65
-<
+<%!
 80
 00 07
 00 00 00 00
@@ -39,7 +43,7 @@ Does all kinds of stuff to data and expects things
 90
 00 00
 00 00 00 00
-<
+<%!
 20
 00 07
 00 00 00 00
@@ -48,4 +52,4 @@ Does all kinds of stuff to data and expects things
 30
 00 00
 00 00 00 00
-%
+%*

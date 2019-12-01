@@ -14,7 +14,7 @@
 #define NETWORK_RECEIVE_FNPTR(respond) void (*respond)(struct Response* rec, int32 sock_fd)
 #define NETWORK_RECEIVE_HANDLER(receive_handler, rec, sock_fd) void receive_handler(struct Response* rec, int32 sock_fd)
 
-#define BUFFER_SIZE 512u
+#define BUFFER_SIZE 65535
 
 #define send(sock_fd, encoded_data, encoded_data_len) send(sock_fd, encoded_data, encoded_data_len, 0)
 

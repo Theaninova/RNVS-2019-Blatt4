@@ -26,9 +26,15 @@
 #endif
 
 #ifdef DEBUG
-#define LOG_INT(value) printf("[VAR]:   (STR) "#value"='%d'\n", value)
+#define LOG_INT(value) printf("[VAR]:   (INT) "#value"='%d'\n", value)
 #else
 #define LOG_INT(msg)
+#endif
+
+#ifdef DEBUG
+#define LOG_BYTE(value) printf("[VAR]:  (BYTE) "#value"='%u'\n", value)
+#else
+#define LOG_BYTE(msg)
 #endif
 
 #ifdef DEBUG
@@ -55,7 +61,7 @@ if (value != NULL) { \
 printf("[VAR]:   (HEX) "#value"='"); \
 for (size_t i = 0; i<length; i++) { \
     if (i > 0) printf(" "); \
-    printf("%02X", ((char*)value)[i]);  \
+    printf("%02X", *(((char*)value) + i));  \
 }                             \
 printf("'\n"); \
 }

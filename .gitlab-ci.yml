@@ -36,13 +36,21 @@ Correct Output Files:
     - cd build
     - ls peer
 
+Peer Hash Full Cycle:
+  stage: Test
+  image: python:3.7-stretch
+  dependencies:
+    - CMake Build
+  script:
+    - python3.7 ./test/sr.py -f ./test/services/peer_client_full_cycle.service
+
 Peer Hash Implementation:
   stage: Test
   image: python:3.7-stretch
   dependencies:
     - CMake Build
   script:
-    - python3.7 ./test/sr.py -f ./test/services/peer_client_request_this_full.service -a localhost -p 3000 -F ./build/peer -A "15 127.0.0.1 4711 10 127.0.0.1 3000 20 127.0.0.1 3000"
+    - python3.7 ./test/sr.py -f ./test/services/peer_client_request_this_full.service
 
 Peer Lookup Next:
   stage: Test
@@ -50,7 +58,7 @@ Peer Lookup Next:
   dependencies:
     - CMake Build
   script:
-    - python3.7 ./test/sr.py -f ./test/services/peer_lookup_next.service -a localhost -p 3000 -F ./build/peer -A "15 127.0.0.1 4711 10 127.0.0.1 3000 20 127.0.0.1 3000"
+    - python3.7 ./test/sr.py -f ./test/services/peer_lookup_next.service
 
 Peer Lookup Other:
   stage: Test
@@ -58,4 +66,4 @@ Peer Lookup Other:
   dependencies:
     - CMake Build
   script:
-    - python3.7 ./test/sr.py -f ./test/services/peer_lookup_other.service -a localhost -p 3000 -F ./build/peer -A "15 127.0.0.1 4711 10 127.0.0.1 3000 20 127.0.0.1 3000"
+    - python3.7 ./test/sr.py -f ./test/services/peer_lookup_other.service

@@ -25,7 +25,7 @@ typedef struct {
     bool set;
     bool delete;
     byte16 key_length;
-    byte16 value_length;
+    byte32 value_length;
     val unknown *key;
     val unknown *value;
 } ClientProtocol;

@@ -93,6 +93,8 @@ def main(argv):
         elif char == '%':
             log("Closing connection")
             sock.close()
+            log("Waiting a second for the program to catch up")
+            time.sleep(1)
         elif char == '*':
             log("Forcefully stopping program.")
             process.kill()
