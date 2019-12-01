@@ -6,12 +6,16 @@
 #include "debug.h"
 #include "generic/commander.h"
 #include "generic/peer_lookup.h"
+#include "generic/queue.h"
 
 typedef struct {
     Peer this;
     Peer next;
     Peer prev;
 } PeerInfo;
+
+QUEUE(client_requests, PeerProtocol);
+QUEUE(sockets, int32);
 
 const PeerInfo peer_info;
 
@@ -66,18 +70,13 @@ void peer_hash_handler(ClientProtocol decodedData,int sock_fd) {
 }
 
 
-
-
-
-
 NETWORK_RECEIVE_HANDLER(receive_handler, rec, sock_fd) {
-    LOG("Parsing request");
 
+    LOG("Parsing request");
 
     if (isPeerProtocol(rec)) {
         PeerProtocol decodedData = {};       //build PeerHeader
         decode_peerProtocol(rec->data, &decodedData);
-
         if (decodedData.lookup) {
             LOG("LOOKUP");
             if (lookup_is_responsible(decodedData.hashId, peer_info.next, peer_info.this)) {
@@ -86,32 +85,38 @@ NETWORK_RECEIVE_HANDLER(receive_handler, rec, sock_fd) {
                 send_lookup_request(decodedData, peer_info.next); //else ask next one
             }
         } else if (decodedData.reply) {
+            ClientProtocol *current_request = (ClientProtocol *) calloc(1, sizeof(ClientProtocol));
+            queue_pop(client_requests, current_request));
             int sock_reply_server = setup_as_client(decodedData.nodeIp, decodedData.nodePort);
-            send(sock_reply_server, first_in_queue.data, first_in_queue.data_length);
-            receive(sock_reply_server, /*TODO...*/ );
+            send(sock_reply_server, current_request, current_request.data_length);
+            receive(sock_reply_server, );
             send(first_in_queue.socket, fromServerRecievedData, fromServerRecievedData.length);
-            pop_from_queue();
+
         } else {
             ERROR("false Request"));
         }
     } else { //isClientProtocol(rev)
 
         ClientProtocol decodedData = {};
+
         decode_clientProtocol(rec->data, &decodedData);
 
         if(lookup_is_free) {
             PeerProtocol hash_data = client_to_peer_protocol(decodedData);
             if (lookup_is_responsible(hash_data.hashId, peer_info.this, peer_info.prev)) { //if thisIsResponsible
-                peer_hash_handler(decodedData, sock_fd); //answer to client
+                peer_hash_handler(decodedData, sock_fd); //answer to client peer_hash_handler(decodedData, sock_fd);
             } else if (lookup_is_responsible(hash_data.hashId, peer_info.next, peer_info.this)) {
+                int32 answer_sock;
+                queue_pop(sockets, &answer_sock);
                 int sock_reply_server = setup_as_client(hash_data.nodeIp, hash_data.nodePort);
                 send(sock_reply_server, decodedData, sizeof(decodedData)); //TODO: maybe in Bits and not in Bytes
                 receive(sock_reply_server, //TODO);
                 send(sock_fd, fromServerRecievedData, fromServerRecievedData.length);
             } else {
+                queue_append(sockets, &sock_fd);
+                queue_append(client_requests, rec));
                 hash_data.lookup = LOOKUP_BIT;
                 send_lookup_request(hash_data, peer_info.next); //else ask next one
-                push_in_queue(decodedData);
             }
         }
     }
