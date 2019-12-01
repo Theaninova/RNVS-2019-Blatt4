@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
+#include "wulkanat/helper/descriptive_types.h"
 
 #define BYTE uint8_t
 #define BOOL BYTE
@@ -41,6 +42,12 @@ typedef struct {
     uint16_t nodePort;
 } PeerProtocol;
 
+typedef struct {
+    uint16_t id;
+    uint16_t port;
+    uint32_t ip;
+} Peer;
+
 /**
  *
  *
@@ -64,6 +71,18 @@ void decode_peerProtocol(const void *msg, PeerProtocol *data);
  * @return a pointer to the binary data
  */
 void *encode_peerProtocol(PeerProtocol *data);
+
+/**
+ * Creates a PeerProtocol from the data provided
+ *
+ * @param control the control bit
+ * @param reply the reply bit
+ * @param lookup the lookup bit
+ * @param hashID the hashID
+ * @param peer the peer
+ * @return the finished PeerProtocol
+ */
+PeerProtocol make_peerProtocol(bool control, bool reply, bool lookup, byte16 hashID, Peer peer);
 
 /**
  * Calculates the total size of the data if it is encoded again

@@ -21,6 +21,9 @@
 #define unknown void
 
 #define bool byte8
+#define true 1
+#define false 0
+#define truthy(value) (value ? true : false)
 
 #define string char*
 

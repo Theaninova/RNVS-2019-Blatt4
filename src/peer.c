@@ -7,7 +7,6 @@
 #include "generic/commander.h"
 #include "generic/peer_lookup.h"
 
-
 typedef struct {
     Peer this;
     Peer next;
