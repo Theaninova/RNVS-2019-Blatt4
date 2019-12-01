@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "wulkanat/helper/descriptive_types.h"
+#include "data_helper.h"
 
 #define BYTE uint8_t
 #define BOOL BYTE
@@ -47,6 +48,13 @@ typedef struct {
     uint16_t port;
     uint32_t ip;
 } Peer;
+
+typedef struct {
+    Peer this;
+    Peer next;
+    Peer prev;
+} PeerInfo;
+
 
 /**
  *
@@ -115,3 +123,39 @@ void *encode_clientProtocol(ClientProtocol *data);
  * @return the size of [data] if it is encoded again
  */
 size_t clientProtocolCalculateSize(ClientProtocol *data);
+
+/**
+ * Checks if the peer is responsible for the data request
+ *
+ * @param decodedData the data the peer may be responsible for
+ * @param this the peer that may be responsible
+ * @param prev the previous peer
+ * @return whether the peer is responsible
+ */
+BOOL lookup_is_responsible(uint16_t hash_id, Peer this, Peer prev);
+
+/**
+ * Value indicating if a ring propagation due to lookup is not running
+ */
+BOOL lookup_is_free =   1;      // unused
+
+/**
+ *
+ * @param
+ * @return
+ */
+void send_found_lookup(PeerProtocol decodedData, Peer next);
+
+/**
+ *
+ * @param
+ * @return
+ */
+void send_lookup_request(PeerProtocol decodedData, Peer next);
+
+/**
+ *
+ * @param
+ * @return
+ */
+void send_lookup_request(hash_data, Peer next);

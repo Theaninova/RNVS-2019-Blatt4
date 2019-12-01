@@ -5,6 +5,8 @@
 #include <netinet/in.h>
 #include "data_helper.h"
 #include "../debug.h"
+#include "peer_lookup.h"
+#include "../helper/Max/extended_math.h"
 
 // by using the packed attribute the compiler will not insert any data between or around the struct when in memory for
 // optimization. That means that we can layout the data structure that we have for the network protocol in a struct
@@ -113,4 +115,20 @@ PeerProtocol make_peerProtocol(bool control, bool reply, bool lookup, byte16 has
     result.nodePort = peer.port;
 
     return result;
+}
+
+bool lookup_is_responsible(uint16_t hash_id, Peer this, Peer prev){
+    return is_in_range((uint16) hash_id, (uint16) this.id, (uint16) prev.id);
+}
+
+void send_found_lookup(PeerProtocol *Data, Peer next){
+
+}
+
+void send_lookup_request(decodedData, Peer next){
+
+}
+
+void send_lookup_request(hash_data, Peer next){
+
 }
