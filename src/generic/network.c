@@ -2,10 +2,6 @@
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h>
-#include <arpa/inet.h>
 #include <sys/wait.h>
 #include <signal.h>
 #include "network.h"
@@ -41,6 +37,9 @@ int32 setup_as_client(string addr, string port) {
     AddressInfo *server_info;
     AddressInfo *p;
     char s[INET6_ADDRSTRLEN];
+
+    LOG_STR(addr);
+    LOG_STR(port);
 
     //define hints
     memset(&hints, 0, sizeof hints); //empty hint
@@ -153,11 +152,17 @@ int32 setup_as_server(string port) {
         return -1;
     }
 
+    return sock_fd;
+}
+
+int32 get_new_connection(int32 sock_fd) {
     AddressInfoStorage their_addr;
     string s;
 
     size_t sin_size = sizeof(their_addr);
-    int new_fd;
+
+    int32 new_fd;
+
     LOG("Waiting for Connection");
     while ((new_fd = accept(sock_fd, (struct sockaddr *) &their_addr, (socklen_t*) &sin_size)) == -1) {/*noop*/}
 
@@ -204,6 +209,7 @@ Response direct_receive(int32 sock_fd) {
     LOG_INT((int32) total_number_of_bytes);
     response.data = malloc(total_number_of_bytes);
     response.data_length = total_number_of_bytes;
+    response.status_code = STATUS_OK;
     memcpy(response.data, buffer, total_number_of_bytes);
 
     return response;

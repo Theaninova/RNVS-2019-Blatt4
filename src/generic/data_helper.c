@@ -16,7 +16,7 @@ typedef struct __attribute__((packed)) {
     byte8 header;
     byte16 hashID;
     byte16 nodeID;
-    byte16 nodeIP;
+    byte32 nodeIP;
     byte16 nodePort;
 } RawPeerProtocol;
 
@@ -27,10 +27,10 @@ void decode_peerProtocol(val unknown *msg, PeerProtocol *data) {
     data->reply = raw->header MASK REPLY_BIT;
     data->lookup = raw->header MASK LOOKUP_BIT;
 
-    data->hashId = raw->hashID;
-    data->nodeId = raw->nodeID;
-    data->nodeIp = raw->nodeIP;
-    data->nodePort = raw->nodePort;
+    data->hashId = ntohs(raw->hashID);
+    data->nodeId = ntohs(raw->nodeID);
+    data->nodeIp = ntohl(raw->nodeIP); // TODO: is that right?
+    data->nodePort = /*ntohs(*/raw->nodePort/*)*/;
 }
 
 size_t peerProtocolCalculateSize(PeerProtocol *data) {
@@ -41,16 +41,16 @@ void *encode_peerProtocol(PeerProtocol *data) {
     RawPeerProtocol *msg = calloc(peerProtocolCalculateSize(data), 1);
 
     msg->header = data->control COMBINE data->reply COMBINE data->lookup;
-    msg->hashID = data->hashId;
-    msg->nodeID = data->nodeId;
-    msg->nodeIP = data->nodeIp;
-    msg->nodePort = data->nodePort;
+    msg->hashID = htons(data->hashId);
+    msg->nodeID = htons(data->nodeId);
+    msg->nodeIP = htonl(data->nodeIp);
+    msg->nodePort = htons(data->nodePort);
 
     return msg;
 }
 
 bool isPeerProtocol(void *msg) {
-    return *((byte8 *) msg) MASK CONTROL_BIT;
+    return truthy(as(byte8, msg) MASK CONTROL_BIT);
 }
 
 void decode_clientProtocol(const void *msg, ClientProtocol *data) {
@@ -131,9 +131,12 @@ PeerProtocol peerProtocol_from_clientProtocol(ClientProtocol *clientProtocol, Pe
 }
 
 void send_found_lookup(PeerProtocol *data, Peer next){
+    data->control   =   CONTROL_BIT;
     data->reply     =   REPLY_BIT;
-    data->lookup    =   LOOKUP_BIT;
+    data->lookup    =   0u;
     data->nodePort  =   next.port;
+    data->nodeIp    =   next.ip;
+    data->nodeId    =   next.id;
 
     int_addr_to_str(nodeIp, data->nodeIp)
     int_port_to_str(nodePort, data->nodePort)

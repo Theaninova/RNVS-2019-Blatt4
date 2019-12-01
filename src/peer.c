@@ -66,6 +66,8 @@ void respond_as_responsible_peer(ClientProtocol decodedData, int32 sock_fd) {
 void next_job_in_queue() {
     if (queue_is_empty(client_requests)) return;
 
+    LOG("Executing next Job");
+
     unknown *next_client_job = NULL;
     queue_peek(client_requests, next_client_job)
     ClientProtocol decodedData = {};
@@ -85,15 +87,18 @@ void next_job_in_queue() {
 NETWORK_RECEIVE_HANDLER(receive_handler, rec, sock_fd) {
     LOG("Parsing request");
 
-    if (isPeerProtocol(rec)) {
+    if (isPeerProtocol(rec->data)) {
+        LOG("Peer");
         PeerProtocol decodedData = {};       //build PeerHeader
         decode_peerProtocol(rec->data, &decodedData);
 
         if (decodedData.lookup) {
             LOG("Lookup");
             if (lookup_is_responsible(decodedData.hashId, peer_info.next, peer_info.this)) {
+                LOG("Next peer is responsible");
                 send_found_lookup(&decodedData, peer_info.next);
             } else {
+                LOG("Not found, redirecting to next peer");
                 int_addr_to_str(nodeIp, peer_info.next.ip)
                 int_port_to_str(nodePort, peer_info.next.port)
                 direct_send(nodeIp, nodePort, rec->data, rec->data_length);
@@ -118,15 +123,18 @@ NETWORK_RECEIVE_HANDLER(receive_handler, rec, sock_fd) {
             ERROR("Falsy Request");
         }
     } else { // clientProtocol
+        LOG("Client");
         ClientProtocol decodedData = {};
         decode_clientProtocol(rec->data, &decodedData);
 
         int16 hashId = get_hash_value(decodedData.key, decodedData.key_length);
         if (lookup_is_responsible(hashId, peer_info.this, peer_info.prev)) {
             // this peer is responsible
+            LOG("This peer is responsible");
             respond_as_responsible_peer(decodedData, sock_fd); //answer to client peer_hash_handler(decodedData, sock_fd);
         } else if (lookup_is_responsible(hashId, peer_info.next, peer_info.this)) {
             // next peer is responsible
+            LOG("Next peer is responsible");
             int_addr_to_str(next_addr, peer_info.next.ip)
             int_port_to_str(next_port, peer_info.next.port)
             int32 next_peer = setup_as_client(next_addr, next_port);
@@ -135,6 +143,7 @@ NETWORK_RECEIVE_HANDLER(receive_handler, rec, sock_fd) {
             redirect(next_peer, sock_fd);
         } else {
             // unknown peer is responsible
+            LOG("Unknown Peer is responsible, asking next peer.");
             queue_append(sockets, sock_fd)
             size_t data_size = clientProtocolCalculateSize(&decodedData);
             unknown *data = malloc(data_size);
@@ -142,6 +151,7 @@ NETWORK_RECEIVE_HANDLER(receive_handler, rec, sock_fd) {
             queue_append(client_requests, data)
 
             if (queue_is_empty(client_requests)) {
+                LOG("Queue is empty");
                 next_job_in_queue();
             }
         }
@@ -159,7 +169,7 @@ void grab_data_to_peer_info(int32 argc, string argv[]) {
     str_port_to_int(myPortInt, myPORT)
     peer_info.this.ip = myAddrInt;
     peer_info.this.port = myPortInt;
-    peer_info.this.id = atoi(myPORT);
+    peer_info.this.id = atoi(myID);
 
     STR_ARG(nextID, 3)
     STR_ARG(nextIP, 4)
@@ -168,7 +178,7 @@ void grab_data_to_peer_info(int32 argc, string argv[]) {
     str_port_to_int(nextPortInt, nextPORT)
     peer_info.next.ip = nextAddrInt;
     peer_info.next.port = nextPortInt;
-    peer_info.next.id = atoi(myPORT);
+    peer_info.next.id = atoi(nextID);
 
     STR_ARG(prevID, 6)
     STR_ARG(prevIP, 7)
@@ -177,7 +187,7 @@ void grab_data_to_peer_info(int32 argc, string argv[]) {
     str_port_to_int(prevPortInt, prevPORT)
     peer_info.prev.ip = prevAddrInt;
     peer_info.prev.port = prevPortInt;
-    peer_info.prev.id = atoi(myPORT);
+    peer_info.prev.id = atoi(prevID);
 }
 #pragma clang diagnostic pop
 
@@ -190,9 +200,13 @@ DEBUGGABLE_MAIN(argc, argv)
     int sock_fd = setup_as_server(myPORT);
 
     loop {
-        int code = receive(sock_fd, receive_handler);
+        // TODO: select
+        int new_sock = get_new_connection(sock_fd);
+        int code = receive(new_sock, receive_handler);
         if (code == STATUS_OK) {
             LOG("Status OK");
+        } else if (code == STATUS_SOCKET_CLOSED) {
+            LOG("Connection terminated by client.");
         } else {
             ERROR("Error while connecting");
             THROW(-1)

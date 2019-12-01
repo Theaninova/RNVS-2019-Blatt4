@@ -43,17 +43,19 @@ def main(argv):
         if read_new_socket_data:
             if char == ']':
                 socket_data = data.split('|')
+                if current_socket_data != -1:
+                    socket_data_list[current_socket_data][0] = sock
                 if len(socket_data) == 1:
-                    if current_socket_data != -1:
-                        socket_data_list[current_socket_data][0] = sock
+                    log(f"Swapping sockets... ({socket_data[0]} | {socket_data_list[int(socket_data[0])][1]}:{socket_data_list[int(socket_data[0])][2]})")
                     sock = socket_data_list[int(socket_data[0])][0]
                     address = socket_data_list[int(socket_data[0])][1]
                     port = socket_data_list[int(socket_data[0])][2]
                     current_socket_data = int(socket_data[0])
                 else:
-                    socket_data_list.insert(int(socket_data[0]), (None, socket_data[1], int(socket_data[2])))
+                    socket_data_list.insert(int(socket_data[0]), [None, socket_data[1], int(socket_data[2])])
                     address = socket_data_list[int(socket_data[0])][1]
                     port = socket_data_list[int(socket_data[0])][2]
+                    current_socket_data = int(socket_data[0])
                 data = ''
                 read_new_socket_data = False
             else:
@@ -86,10 +88,14 @@ def main(argv):
         elif char == '^':
             log(f"Starting the Application with arguments '{p_args}'")
             process = subprocess.Popen(f"{program_path} {p_args}".split()) #, stdout=subprocess.PIPE
+            log("Waiting 1s after the program has started")
             time.sleep(1)
         elif char == '%':
             log("Closing connection")
             sock.close()
+        elif char == '*':
+            log("Forcefully stopping program.")
+            process.kill()
         elif char == '$':
             log("Checking Command line output in 1 second")
             time.sleep(1)
@@ -109,7 +115,7 @@ def main(argv):
     log("Script finished, waiting 2 seconds until cleaning up")
     time.sleep(2)
     return_code = process.poll()
-    if return_code is None or return_code != 0:
+    if return_code is None or (return_code != 0 and return_code != -9): #-9 for SIG_INTERRUPT
         if return_code is None:
             err("Application is still running, terminating")
         else:
@@ -163,12 +169,11 @@ def send(sock, data, process):
     log(f"Sending {binascii.hexlify(data)}")
     sock.sendall(data)
     log("Sent.")
-    time.sleep(1)
 
 
 def validate(received_data, data, process):
-    log(f"{binascii.hexlify(received_data)} | Received data")
     log(f"{binascii.hexlify(data)} | Expected data, evaluating...")
+    log(f"{binascii.hexlify(received_data)} | Received data")
 
     if len(received_data) != len(data):
         err("Received data is not the same length, terminating")

@@ -1,15 +1,20 @@
-Sends a lookup for 25 and expects the same in return
-:^!
+Data is in the next node
+Sends a lookup for ID 25 and expects the same output as what was given in
+:
+{./build/peer|15 127.0.0.1 3005 20 127.0.0.1 3006 10 127.0.0.1 3004}^
+[0|localhost|3006]?
+[1|localhost|3005]!
 81
 00 19
-00 00
-7F 00 00 01
-0B B8
+00 01
+01 00 00 7F
+0B BD
 >
+[0]~
 81
 00 19
-00 00
-7F 00 00 01
-0B B8
+00 01
+01 00 00 7F
+0B BD
 <
-%
+%*
