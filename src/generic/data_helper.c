@@ -98,3 +98,19 @@ void *encode_clientProtocol(ClientProtocol *data) {
     LOG("Finished encoding");
     return msg;
 }
+
+PeerProtocol make_peerProtocol(bool control, bool reply, bool lookup, byte16 hashID, Peer peer) {
+    PeerProtocol result;
+
+    result.control = control ? CONTROL_BIT : 0;
+    result.reply   = reply   ? REPLY_BIT   : 0;
+    result.lookup  = lookup  ? LOOKUP_BIT  : 0;
+
+    result.hashId = hashID;
+
+    result.nodeId = peer.id;
+    result.nodeIp = peer.ip;
+    result.nodePort = peer.port;
+
+    return result;
+}
