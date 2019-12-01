@@ -6,7 +6,7 @@
 #define QUEUE(name, type) \
 struct QueueElement##name { \
     struct QueueElement##name *next; \
-    type *data; \
+    type data; \
 }; \
 typedef struct QueueElement##name QueueElement##name; \
  \
@@ -30,3 +30,9 @@ QueueElement##queue *___tmp = queue.first; \
 queue.first = queue.first->next; \
 free(___tmp); \
 };
+
+#define queue_peek(queue, data_ptr) while (0) { \
+data_ptr = queue.first->data; \
+};
+
+#define queue_is_empty(queue) (queue.first == NULL)

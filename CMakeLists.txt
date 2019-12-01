@@ -18,7 +18,10 @@ add_executable(client
         src/helper/wulkanat/commander.h
         src/helper/wulkanat/debug.h
         src/helper/wulkanat/queue.h
-        src/helper/wulkanat/descriptive_types.h)
+        src/helper/wulkanat/descriptive_types.h
+
+        src/helper/max/extended_math.h
+        src/helper/max/extended_math.c)
 add_executable(peer
         src/peer.c
 
@@ -35,6 +38,7 @@ add_executable(peer
         src/helper/wulkanat/debug.h
         src/helper/wulkanat/queue.h
         src/helper/wulkanat/descriptive_types.h
+        src/helper/wulkanat/flow_plus.h
 
         src/helper/max/extended_math.h
         src/helper/max/extended_math.c)

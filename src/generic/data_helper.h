@@ -4,11 +4,8 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
-#include "wulkanat/helper/descriptive_types.h"
 #include "data_helper.h"
-
-#define BYTE uint8_t
-#define BOOL BYTE
+#include "../helper/wulkanat/descriptive_types.h"
 
 #define ACK_BIT ((uint8_t) (0x01u << 4u))
 #define GET_BIT ((uint8_t) (0x01u << 5u))
@@ -23,30 +20,30 @@
 #define COMBINE +
 
 typedef struct {
-    BOOL act;
-    BOOL get;
-    BOOL set;
-    BOOL delete;
-    uint16_t key_length;
-    uint32_t value_length;
-    const void *key;
-    const void *value;
+    bool act;
+    bool get;
+    bool set;
+    bool delete;
+    byte16 key_length;
+    byte16 value_length;
+    val unknown *key;
+    val unknown *value;
 } ClientProtocol;
 
 typedef struct {
-    BOOL control;
-    BOOL reply;
-    BOOL lookup;
-    uint16_t hashId;
-    uint16_t nodeId;
-    uint32_t nodeIp;
-    uint16_t nodePort;
+    bool control;
+    bool reply;
+    bool lookup;
+    byte16 hashId;
+    byte16 nodeId;
+    byte32 nodeIp;
+    byte16 nodePort;
 } PeerProtocol;
 
 typedef struct {
-    uint16_t id;
-    uint16_t port;
-    uint32_t ip;
+    byte16 id;
+    byte16 port;
+    byte32 ip;
 } Peer;
 
 typedef struct {
@@ -62,7 +59,7 @@ typedef struct {
  * @param msg the encoded data
  * @return wether it is a PeerProtocol message
  */
-BOOL isPeerProtocol(void *msg);
+bool isPeerProtocol(unknown *msg);
 
 /**
  * Gets all parts from a binary message
@@ -70,7 +67,7 @@ BOOL isPeerProtocol(void *msg);
  * @param msg the binary message
  * @param data an empty pointer to the decoded data
  */
-void decode_peerProtocol(const void *msg, PeerProtocol *data);
+void decode_peerProtocol(val unknown *msg, PeerProtocol *data);
 
 /**
  * Encodes a DecodedData message again to binary format
@@ -90,7 +87,15 @@ void *encode_peerProtocol(PeerProtocol *data);
  * @param peer the peer
  * @return the finished PeerProtocol
  */
-PeerProtocol make_peerProtocol(bool control, bool reply, bool lookup, byte16 hashID, Peer peer);
+PeerProtocol make_peerProtocol(bool reply, bool lookup, byte16 hashID, Peer peer);
+
+/**
+ * Creates a peerProtocol from a clientProtocol
+ *
+ * @param clientProtocol the protocol to use as a template
+ * @return the peerProtocol
+ */
+PeerProtocol peerProtocol_from_clientProtocol(ClientProtocol *clientProtocol, Peer peer);
 
 /**
  * Calculates the total size of the data if it is encoded again
@@ -106,7 +111,7 @@ size_t peerProtocolCalculateSize(PeerProtocol *data);
  * @param msg the binary message
  * @param data an empty pointer to the decoded data
  */
-void decode_clientProtocol(const void *msg, ClientProtocol *data);
+void decode_clientProtocol(val unknown *msg, ClientProtocol *data);
 
 /**
  * Encodes a DecodedData message again to binary format
@@ -132,23 +137,12 @@ size_t clientProtocolCalculateSize(ClientProtocol *data);
  * @param prev the previous peer
  * @return whether the peer is responsible
  */
-BOOL lookup_is_responsible(uint16_t hash_id, Peer this, Peer prev);
+bool lookup_is_responsible(byte16 hash_id, Peer this, Peer prev);
 
 /**
- * Value indicating if a ring propagation due to lookup is not running
- */
-BOOL lookup_is_free =   1;      // unused
-
-/**
+ * Sends a lookup request for when there was a node found that matches
  *
  * @param
  * @return
  */
-void send_found_lookup(PeerProtocol decodedData, Peer next);
-
-/**
- *
- * @param
- * @return
- */
-void send_lookup_request(PeerProtocol decodedData, Peer next);
+void send_found_lookup(PeerProtocol *decodedData, Peer next);

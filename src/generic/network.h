@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stddef.h>
+#include <stdio.h>
 #include "../helper/wulkanat/descriptive_types.h"
 
 #define STATUS_OK 200
@@ -24,6 +25,33 @@ struct Response {
 };
 
 typedef struct Response Response;
+
+#define int_addr_to_str(name, addr) \
+char name[15]; \
+sprintf(name, "%d.%d.%d.%d", as(byte8, &addr), as(byte8, &addr + 1), as(byte8, &addr + 2), as(byte8, &addr + 3));
+
+#define int_port_to_str(name, port) \
+char name[5]; \
+sprintf(name, "%d", port);
+
+#define str_port_to_int(name, port) \
+int32 name = atoi(port);
+
+#define str_addr_to_int(name, addr) \
+int32 name = 0; \
+do {\
+    size_t total_length = strlen(addr); \
+    int32 cursor = 0; \
+    for (int i = 0; i < 4; i++) { \
+        char buffer[3]; \
+        for (int j = 0; cursor < total_length && addr[cursor] != '.'; j++) { \
+            buffer[j] = addr[cursor]; \
+            cursor++; \
+        } \
+        cursor++; \
+        as(byte8, &name + i) = (byte8) atoi(buffer); \
+    } \
+} while (0);
 
 /**
  * Sets up a socket as a server
@@ -50,3 +78,23 @@ int32 setup_as_client(string addr, string port);
  * @return STATUS_OK, STATUS_INTERNAL_SERVER, STATUS_WAITING
  */
 int32 receive(int32 sock_fd, NETWORK_RECEIVE_FNPTR(callback));
+
+/**
+ * Redirects a request to another socket
+ *
+ * @param sock_from the socket from which the request comes
+ * @param sock_to the socket to which the request goes
+ * @return STATUS_OK, STATUS_INTERNAL_SERVER, STATUS_WAITING
+ */
+int32 redirect(int32 sock_from, int32 sock_to);
+
+/**
+ * Directly sends data to an address
+ *
+ * @param addr the address to send to
+ * @param port the port to send to
+ * @param data the data to send
+ * @param data_size the size of the data
+ * @return the socket of the connection
+ */
+int32 direct_send(string addr, string port, unknown *data, size_t data_size);

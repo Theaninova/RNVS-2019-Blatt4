@@ -170,7 +170,7 @@ int32 setup_as_server(string port) {
     return new_fd;
 }
 
-int32 receive(int32 sock_fd, NETWORK_RECEIVE_FNPTR(callback)) {
+Response direct_receive(int32 sock_fd) {
     Response response = {};
 
     char buffer[BUFFER_SIZE];
@@ -198,16 +198,36 @@ int32 receive(int32 sock_fd, NETWORK_RECEIVE_FNPTR(callback)) {
 
     if (total_number_of_bytes == 0) {
         LOG("Socket Closed");
-        return STATUS_SOCKET_CLOSED;
+        response.status_code = STATUS_SOCKET_CLOSED;
+        return response;
     }
     LOG_INT((int32) total_number_of_bytes);
-    LOG_INT((int32) total_number_of_bytes);
     response.data = malloc(total_number_of_bytes);
-    memcpy(response.data, buffer, total_number_of_bytes);
     response.data_length = total_number_of_bytes;
-    response.status_code = 200;
+    memcpy(response.data, buffer, total_number_of_bytes);
+
+    return response;
+}
+
+int32 receive(int32 sock_fd, NETWORK_RECEIVE_FNPTR(callback)) {
+    Response response = direct_receive(sock_fd);
 
     callback(&response, sock_fd);
 
-    return STATUS_OK;
+    return response.status_code;
+}
+
+int32 redirect(int32 sock_from, int32 sock_to) {
+    Response response = direct_receive(sock_from);
+
+    send(sock_to, response.data, response.data_length);
+
+    return response.status_code;
+}
+
+int32 direct_send(string addr, string port, unknown *data, size_t data_size) {
+    int32 sock_fd = setup_as_client(addr, port);
+    send(sock_fd, data, data_size);
+
+    return sock_fd;
 }

@@ -28,3 +28,5 @@
 #define string char*
 
 #define val const
+
+#define as(to, from) *((to *) (from))

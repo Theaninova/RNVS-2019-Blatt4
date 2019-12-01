@@ -11,4 +11,4 @@
  * @return bool, true if it's in range
  *
  */
-bool is_in_range(byte32 value, byte32 upper, byte32 lower);
+bool in_range(byte32 value, byte32 upper, byte32 lower);

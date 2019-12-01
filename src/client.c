@@ -1,8 +1,8 @@
 #include <sys/socket.h>
 #include "generic/network.h"
 #include "generic/data_helper.h"
-#include "debug.h"
-#include "generic/commander.h"
+#include "helper/wulkanat/debug.h"
+#include "helper/wulkanat/commander.h"
 
 #define GET "GET"
 #define SET "SET"
@@ -46,7 +46,7 @@ DEBUGGABLE_MAIN(argc, argv)
         data.value = NULL;
     }
 
-    BYTE *encoded_data = encode_clientProtocol(&data);
+    byte8 *encoded_data = encode_clientProtocol(&data);
     size_t encoded_data_len = clientProtocolCalculateSize(&data);
 
     int sock_fd = setup_as_client(address, port);

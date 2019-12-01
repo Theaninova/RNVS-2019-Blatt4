@@ -44,7 +44,7 @@
 #endif
 
 #ifdef DEBUG
-#define THROW(code) return code;
+#define THROW(code) exit(code);
 #else
 #define THROW(code) return 0;
 #endif

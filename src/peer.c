@@ -1,33 +1,34 @@
 #include <sys/socket.h>
-#include <netinet/in.h>
 #include "generic/network.h"
 #include "generic/data_helper.h"
 #include "generic/hash_helper.h"
-#include "debug.h"
-#include "generic/commander.h"
-#include "generic/peer_lookup.h"
-#include "generic/queue.h"
+#include "helper/wulkanat/debug.h"
+#include "helper/wulkanat/commander.h"
+#include "helper/wulkanat/queue.h"
+#include "helper/wulkanat/flow_plus.h"
 
-QUEUE(client_requests, PeerProtocol);
-QUEUE(sockets, int32);
+QUEUE(client_requests, unknown*)
+QUEUE(sockets, int32)
 
-const PeerInfo peer_info;
+PeerInfo peer_info;
 
-void peer_hash_handler(ClientProtocol decodedData,int sock_fd) {
+void respond_as_responsible_peer(ClientProtocol decodedData, int32 sock_fd) {
     LOG("Parsing request");
 
     if (decodedData.get) {
         LOG("[GET]");
         HEX_VALUE_LOG(decodedData.key, decodedData.key_length);
+
         struct HashElement *element = get(decodedData.key, decodedData.key_length);
+
         if (element == NULL) {
             LOG("Empty value (not found)");
-            BYTE res[sizeof(BYTE) + sizeof(decodedData.key_length) + sizeof(decodedData.value_length)];
-            *((uint16_t *) (res + sizeof(BYTE))) = 0u;
-            *((uint32_t *) (res + sizeof(BYTE) + sizeof(uint16_t))) = 0u;
+            byte8 res[sizeof(byte8) + sizeof(decodedData.key_length) + sizeof(decodedData.value_length)];
+            as(byte16, res + sizeof(byte8)) = 0u;
+            as(byte32, res + sizeof(byte8) + sizeof(byte16)) = 0u;
             *res = ACK_BIT COMBINE GET_BIT;
             LOG("Acknowledged");
-            send(sock_fd, &res, sizeof(BYTE) + sizeof(decodedData.key_length) + sizeof(decodedData.value_length));
+            send(sock_fd, &res, sizeof(byte8) + sizeof(decodedData.key_length) + sizeof(decodedData.value_length));
             return;
         }
         decodedData.value = element->value;
@@ -43,130 +44,151 @@ void peer_hash_handler(ClientProtocol decodedData,int sock_fd) {
 
         set((void *) decodedData.key, decodedData.key_length, decodedData.value, decodedData.value_length);
         HEX_VALUE_LOG(decodedData.value, decodedData.value_length);
-        BYTE res[sizeof(BYTE) + sizeof(decodedData.key_length) + sizeof(decodedData.value_length)];
-        *((uint16_t *) (res + sizeof(BYTE))) = 0u;
-        *((uint32_t *) (res + sizeof(BYTE) + sizeof(uint16_t))) = 0u;
+        byte8 res[sizeof(byte8) + sizeof(decodedData.key_length) + sizeof(decodedData.value_length)];
+        as(byte16, res + sizeof(byte8)) = 0u;
+        as(byte32, res + sizeof(byte8) + sizeof(byte16)) = 0u;
         *res = ACK_BIT COMBINE SET_BIT;
         LOG("Acknowledged");
-        send(sock_fd, &res, sizeof(BYTE) + sizeof(decodedData.key_length) + sizeof(decodedData.value_length));
+        send(sock_fd, &res, sizeof(byte8) + sizeof(decodedData.key_length) + sizeof(decodedData.value_length));
     }
     if (decodedData.delete) {
         LOG("[DELETE]");
-        delete_element((void *) decodedData.key, decodedData.key_length);
-        BYTE res[sizeof(BYTE) + sizeof(decodedData.key_length) + sizeof(decodedData.value_length)];
-        *((uint16_t *) (res + sizeof(BYTE))) = 0u;
-        *((uint32_t *) (res + sizeof(BYTE) + sizeof(uint16_t))) = 0u;
+        delete_element((unknown *) decodedData.key, decodedData.key_length);
+        byte8 res[sizeof(byte8) + sizeof(decodedData.key_length) + sizeof(decodedData.value_length)];
+        as(byte16, res + sizeof(byte8)) = 0u;
+        as(byte32, res + sizeof(byte8) + sizeof(byte16)) = 0u;
         *res = ACK_BIT COMBINE DELETE_BIT;
         LOG("Acknowledged");
-        send(sock_fd, &res, sizeof(BYTE) + sizeof(decodedData.key_length) + sizeof(decodedData.value_length));
+        send(sock_fd, &res, sizeof(byte8) + sizeof(decodedData.key_length) + sizeof(decodedData.value_length));
     }
 }
 
+void next_job_in_queue() {
+    if (queue_is_empty(client_requests)) return;
+
+    unknown *next_client_job = NULL;
+    queue_peek(client_requests, next_client_job)
+    ClientProtocol decodedData = {};
+    decode_clientProtocol(next_client_job, &decodedData);
+
+    PeerProtocol peer_request = make_peerProtocol(false, true,
+                                                  get_hash_value(decodedData.key, decodedData.key_length),
+                                                  peer_info.this);
+    unknown *encoded_response = encode_peerProtocol(&peer_request);
+
+    int_addr_to_str(next_addr, peer_info.next.ip)
+    int_port_to_str(next_port, peer_info.next.port)
+    int32 next_peer = setup_as_client(next_addr, next_port);
+    send(next_peer, encoded_response, clientProtocolCalculateSize(&decodedData));
+}
 
 NETWORK_RECEIVE_HANDLER(receive_handler, rec, sock_fd) {
-
     LOG("Parsing request");
 
     if (isPeerProtocol(rec)) {
         PeerProtocol decodedData = {};       //build PeerHeader
         decode_peerProtocol(rec->data, &decodedData);
+
         if (decodedData.lookup) {
-            LOG("LOOKUP");
+            LOG("Lookup");
             if (lookup_is_responsible(decodedData.hashId, peer_info.next, peer_info.this)) {
-                send_found_lookup(decodedData, peer_info.next);
+                send_found_lookup(&decodedData, peer_info.next);
             } else {
-                send_lookup_request(decodedData, peer_info.next); //else ask next one
+                int_addr_to_str(nodeIp, peer_info.next.ip)
+                int_port_to_str(nodePort, peer_info.next.port)
+                direct_send(nodeIp, nodePort, rec->data, rec->data_length);
             }
         } else if (decodedData.reply) {
-            ClientProtocol *current_request = (ClientProtocol *) calloc(1, sizeof(ClientProtocol));
-            queue_pop(client_requests, current_request));
-            int sock_reply_server = setup_as_client(decodedData.nodeIp, decodedData.nodePort);
-            send(sock_reply_server, current_request, current_request.data_length);
-            Response fromServerRecievedData;
-            receive(sock_reply_server, fromServerRecievedData);
-            send(first_in_queue.socket, fromServerRecievedData, fromServerRecievedData.length);
+            LOG("Reply");
+            unknown *current_request = NULL;
+            queue_pop(client_requests, current_request)
+            ClientProtocol current_decoded_request = {};
+            decode_clientProtocol(current_request, &current_decoded_request);
+
+            int_addr_to_str(nodeIp, decodedData.nodeIp)
+            int_port_to_str(nodePort, decodedData.nodePort)
+            int32 next_node_sock = direct_send(nodeIp, nodePort, current_request, clientProtocolCalculateSize(&current_decoded_request));
+
+            int32 client_sock = 0;
+            queue_pop(sockets, client_sock)
+            redirect(next_node_sock, client_sock);
+            next_job_in_queue();
 
         } else {
-            ERROR("false Request"));
+            ERROR("Falsy Request");
         }
-    } else { //isClientProtocol(rev)
-
+    } else { // clientProtocol
         ClientProtocol decodedData = {};
-
         decode_clientProtocol(rec->data, &decodedData);
 
-        if(lookup_is_free) {
-            PeerProtocol hash_data = client_to_peer_protocol(decodedData);
-            if (lookup_is_responsible(hash_data.hashId, peer_info.this, peer_info.prev)) { //if thisIsResponsible
-                peer_hash_handler(decodedData, sock_fd); //answer to client peer_hash_handler(decodedData, sock_fd);
-            } else if (lookup_is_responsible(hash_data.hashId, peer_info.next, peer_info.this)) {
-                int32 answer_sock;
-                queue_pop(sockets, &answer_sock);
-                int sock_reply_server = setup_as_client(hash_data.nodeIp, hash_data.nodePort);
-                send(sock_reply_server, decodedData, sizeof(decodedData)); //TODO: maybe in Bits and not in Bytes
-                receive(sock_reply_server, //TODO);
-                send(sock_fd, fromServerRecievedData, fromServerRecievedData.length);
-            } else {
-                queue_append(sockets, &sock_fd);
-                queue_append(client_requests, rec));
-                hash_data.lookup = LOOKUP_BIT;
-                send_lookup_request(hash_data, peer_info.next); //else ask next one
+        int16 hashId = get_hash_value(decodedData.key, decodedData.key_length);
+        if (lookup_is_responsible(hashId, peer_info.this, peer_info.prev)) {
+            // this peer is responsible
+            respond_as_responsible_peer(decodedData, sock_fd); //answer to client peer_hash_handler(decodedData, sock_fd);
+        } else if (lookup_is_responsible(hashId, peer_info.next, peer_info.this)) {
+            // next peer is responsible
+            int_addr_to_str(next_addr, peer_info.next.ip)
+            int_port_to_str(next_port, peer_info.next.port)
+            int32 next_peer = setup_as_client(next_addr, next_port);
+
+            send(next_peer, rec->data, rec->data_length); //TODO: maybe in Bits and not in Bytes
+            redirect(next_peer, sock_fd);
+        } else {
+            // unknown peer is responsible
+            queue_append(sockets, sock_fd)
+            size_t data_size = clientProtocolCalculateSize(&decodedData);
+            unknown *data = malloc(data_size);
+            memcpy(data, rec, data_size);
+            queue_append(client_requests, data)
+
+            if (queue_is_empty(client_requests)) {
+                next_job_in_queue();
             }
         }
     }
 }
 
-
-
-//TODO: how implement more than one clientRequest
-//TODO create hashHead
-//TODO call lookup(hashValue)
-//TODO request to peer
-//TODO answer to peer
-//TODO answer to client
-/*
-check protocolBIT (controlBIT 1 or 0)
-    if !isPeerProtocol():
-        build peerProtocol;
-        if responsible for hashID:
-            useHashTable(headClient);
-            answer to client; BREAK;
-        else:
-            lookup_BIT; lookup();
-    else: //(isPeerProtocol)
-        controlBIT == 1:
-        if lookupBIT == 1;
-            lookup();
-        else if requestBIT:
-            answer = sendRequestToServer();
-            answer to client; BREAK;
-
- */
-}
-
-
-DEBUGGABLE_MAIN(argc, argv)
-
-    //TODO: read data throught  pipeline
-
+// suppress atio() warning
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "cert-err34-c"
+void grab_data_to_peer_info(int32 argc, string argv[]) {
     STR_ARG(myID, 0)
     STR_ARG(myIP, 1)
     STR_ARG(myPORT, 2)
+    str_addr_to_int(myAddrInt, myIP)
+    str_port_to_int(myPortInt, myPORT)
+    peer_info.this.ip = myAddrInt;
+    peer_info.this.port = myPortInt;
+    peer_info.this.id = atoi(myPORT);
 
     STR_ARG(nextID, 3)
     STR_ARG(nextIP, 4)
     STR_ARG(nextPORT, 5)
+    str_addr_to_int(nextAddrInt, nextIP)
+    str_port_to_int(nextPortInt, nextPORT)
+    peer_info.next.ip = nextAddrInt;
+    peer_info.next.port = nextPortInt;
+    peer_info.next.id = atoi(myPORT);
 
     STR_ARG(prevID, 6)
     STR_ARG(prevIP, 7)
     STR_ARG(prevPORT, 9)
+    str_addr_to_int(prevAddrInt, prevIP)
+    str_port_to_int(prevPortInt, prevPORT)
+    peer_info.prev.ip = prevAddrInt;
+    peer_info.prev.port = prevPortInt;
+    peer_info.prev.id = atoi(myPORT);
+}
+#pragma clang diagnostic pop
+
+DEBUGGABLE_MAIN(argc, argv)
+    grab_data_to_peer_info(argc, argv);
+    STR_ARG(myPORT, 2)
 
     LOG("Starting Peer");
     int sock_fd = setup_as_server(myPORT);
 
-    while (1) {
-
-        //receive or pop_queue
+    loop {
         int code = receive(sock_fd, receive_handler);
         if (code == STATUS_OK) {
             LOG("Status OK");
