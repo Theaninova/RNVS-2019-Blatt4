@@ -7,6 +7,7 @@
 #include "../debug.h"
 #include "peer_lookup.h"
 #include "../helper/Max/extended_math.h"
+#include "network.h"
 
 // by using the packed attribute the compiler will not insert any data between or around the struct when in memory for
 // optimization. That means that we can layout the data structure that we have for the network protocol in a struct
@@ -122,13 +123,12 @@ bool lookup_is_responsible(uint16_t hash_id, Peer this, Peer prev){
 }
 
 void send_found_lookup(PeerProtocol *Data, Peer next){
-
+    Data->reply     =   REPLY_BIT_BIT;
+    Data->lookup    =   LOOKUP_BIT;
+    Data->nodePort  =   next.port;
+    send(setup_as_client(Data->nodeIp, Data->nodePort), Data, sizeof(Data));
 }
 
-void send_lookup_request(decodedData, Peer next){
-
-}
-
-void send_lookup_request(hash_data, Peer next){
+void send_lookup_request(PeerProtocol decodedData, Peer next){
 
 }

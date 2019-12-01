@@ -82,7 +82,8 @@ NETWORK_RECEIVE_HANDLER(receive_handler, rec, sock_fd) {
             queue_pop(client_requests, current_request));
             int sock_reply_server = setup_as_client(decodedData.nodeIp, decodedData.nodePort);
             send(sock_reply_server, current_request, current_request.data_length);
-            receive(sock_reply_server, );
+            Response fromServerRecievedData;
+            receive(sock_reply_server, fromServerRecievedData);
             send(first_in_queue.socket, fromServerRecievedData, fromServerRecievedData.length);
 
         } else {

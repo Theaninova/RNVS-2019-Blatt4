@@ -152,10 +152,3 @@ void send_found_lookup(PeerProtocol decodedData, Peer next);
  * @return
  */
 void send_lookup_request(PeerProtocol decodedData, Peer next);
-
-/**
- *
- * @param
- * @return
- */
-void send_lookup_request(hash_data, Peer next);
