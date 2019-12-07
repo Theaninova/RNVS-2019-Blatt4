@@ -6,6 +6,7 @@
 #include "helper/wulkanat/commander.h"
 #include "helper/wulkanat/queue.h"
 #include "helper/wulkanat/flow_plus.h"
+#include "helper/max/concurrent_task.h"
 
 QUEUE(client_requests, unknown*)
 QUEUE(sockets, int32)
@@ -218,8 +219,11 @@ DEBUGGABLE_MAIN(argc, argv)
     LOG("Starting Peer");
     LOG_STR(myPORT);
     int sock_fd = setup_as_server(myPORT);
+    Stabilizer_ctrl_block ctrl_block;
 
     if (argc <= 4) { //basis Peer
+
+        ctrl_block.Peer = peer_info;
 
     } else {
         STR_ARG(joinIP, 4);
@@ -234,6 +238,7 @@ DEBUGGABLE_MAIN(argc, argv)
         join(joinAddrInt, joinPortInt, (byte16) atoi(myID));
     }
 
+    pthread_create(&(ctrl_block.pid), NULL, Stabilize_caller, (void *)&ctrl_block);       // for time triggered concurrent stabilize caller
 
     loop {
         int new_sock = get_new_connection(sock_fd);
@@ -247,5 +252,6 @@ DEBUGGABLE_MAIN(argc, argv)
             // THROW(-1)
         }
     }
+    ctrl_block.control = 0;                                                                     // to exit stabilization thread
 }
 
