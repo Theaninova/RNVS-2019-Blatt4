@@ -92,16 +92,22 @@ NETWORK_RECEIVE_HANDLER(receive_handler, rec, sock_fd) {
         PeerProtocol decodedData = {};       //build PeerHeader
         decode_peerProtocol(rec->data, &decodedData);
 
-        // join_request
-        if (decodedData.join) {
+
+        if (decodedData.finger){
+            LOG("Finger");
+            //TODO
+        } else if (decodedData.fack) {
+            LOG("Fack");
+            //TODO
+        }else if (decodedData.join) {
             LOG("Join");
             if (id_is_between(decodedData.hashId, peer_info.this, peer_info.prev)) {
-                // correct prev peer
+                // correct prev_info.prev
                 peer_info.prev.ip = decodedData.nodeIp;
                 peer_info.prev.port = decodedData.nodePort;
                 peer_info.prev.id = decodedData.nodeId;
                 // notify join peer
-                notify(peer_info.join, peer_info.this); //set peer_info.next from #1 to peer_info.this from #2
+                notify(peer_info.join.ip, peer_info.join.port, peer_info.this); //send Peer_protocol to 1# with data from 2# -> set data as peer_info-next
             } else {
                 LOG("Not found, redirecting to next peer");
                 int_addr_to_str(nodeIp, peer_info.next.ip)
@@ -110,9 +116,17 @@ NETWORK_RECEIVE_HANDLER(receive_handler, rec, sock_fd) {
             }
         } else if (decodedData.notify) {
             LOG("Notify");
-            //TODO
+            // correct peer_info.next
+            peer_info.next.ip = decodedData.nodeIp;
+            peer_info.next.port = decodedData.nodePort;
+            peer_info.next.id = decodedData.nodeId;
+
         } else if (decodedData.stabilize){
-            //TODO
+            LOG("Stabilize");
+            if(decodedData.nodeId == peer_info.prev.id) {
+                stabilize(peer_info.next, peer_info.this); //send Peer_protocol to #1 with infos from #2
+            } else if (decodedData.nodeId != peer_info.prev.id) {
+                notify(decodedData.nodeIp, decodedData.nodePort, peer_info.prev);
 
         } else if (decodedData.reply) {
             LOG("Reply");
@@ -206,7 +220,7 @@ DEBUGGABLE_MAIN(argc, argv)
     int sock_fd = setup_as_server(myPORT);
 
     if (argc <= 4) { //basis Peer
-        //TODO : implement statiblize(); // create a thread?
+
     } else {
         STR_ARG(joinIP, 4);
         STR_ARG(joinPORT, 5);
@@ -217,7 +231,7 @@ DEBUGGABLE_MAIN(argc, argv)
         peer_info.join.port = joinPortInt;
         peer_info.join.id = (byte16) atoi(joinID);
 
-        join(joinAddrInt, joinPortInt, (byte16) atoi(myID)); //ask for next_Peer_info [rec notify()]
+        join(joinAddrInt, joinPortInt, (byte16) atoi(myID));
     }
 
 
