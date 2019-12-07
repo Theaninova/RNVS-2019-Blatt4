@@ -50,6 +50,7 @@ typedef struct {
     Peer this;
     Peer next;
     Peer prev;
+    Peer join;
 } PeerInfo;
 
 

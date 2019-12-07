@@ -24,7 +24,6 @@ add_executable(client
         src/helper/max/extended_math.c)
 add_executable(peer
         src/peer.c
-
         src/generic/hash_helper.h
         src/generic/hash_helper.c
         src/generic/network.h

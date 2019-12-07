@@ -142,7 +142,7 @@ NETWORK_RECEIVE_HANDLER(receive_handler, rec, sock_fd) {
             int_port_to_str(next_port, peer_info.next.port)
             int32 next_peer = setup_as_client(next_addr, next_port);
 
-            send(next_peer, rec->data, rec->data_length); //TODO: maybe in Bits and not in Bytes
+            send(next_peer, rec->data, rec->data_length);
             redirect(next_peer, sock_fd);
         } else {
             // unknown peer is responsible
@@ -164,46 +164,41 @@ NETWORK_RECEIVE_HANDLER(receive_handler, rec, sock_fd) {
 // suppress atio() warning
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "cert-err34-c"
-void grab_data_to_peer_info(int32 argc, string argv[]) {
-    STR_ARG(myID, 0)
-    STR_ARG(myIP, 1)
-    STR_ARG(myPORT, 2)
+
+#pragma clang diagnostic pop
+DEBUGGABLE_MAIN(argc, argv)
+
+    STR_ARG(myIP, 1);
+    STR_ARG(myPORT, 2);
+    DEFAULT_STR_ARG(myID, 3,0);
     str_addr_to_int(myAddrInt, myIP)
     str_port_to_int(myPortInt, myPORT)
     peer_info.this.ip = myAddrInt;
     peer_info.this.port = myPortInt;
     peer_info.this.id = (byte16) atoi(myID);
 
-    STR_ARG(nextID, 3)
-    STR_ARG(nextIP, 4)
-    STR_ARG(nextPORT, 5)
-    str_addr_to_int(nextAddrInt, nextIP)
-    str_port_to_int(nextPortInt, nextPORT)
-    peer_info.next.ip = nextAddrInt;
-    peer_info.next.port = nextPortInt;
-    peer_info.next.id = (byte16) atoi(nextID);
-
-    STR_ARG(prevID, 6)
-    STR_ARG(prevIP, 7)
-    STR_ARG(prevPORT, 8)
-    str_addr_to_int(prevAddrInt, prevIP)
-    str_port_to_int(prevPortInt, prevPORT)
-    peer_info.prev.ip = prevAddrInt;
-    peer_info.prev.port = prevPortInt;
-    peer_info.prev.id = (byte16) atoi(prevID);
-}
-#pragma clang diagnostic pop
-
-DEBUGGABLE_MAIN(argc, argv)
-    grab_data_to_peer_info(argc, argv);
-    STR_ARG(myPORT, 2)
 
     LOG("Starting Peer");
     LOG_STR(myPORT);
     int sock_fd = setup_as_server(myPORT);
 
+    if (argc <= 4) { //basis Peer
+        //TODO : implement statiblize(); // create a thread?
+    } else {
+        STR_ARG(joinIP, 4);
+        STR_ARG(joinPORT, 5);
+        STR_ARG(joinID, 3);
+        str_addr_to_int(joinAddrInt, myIP)
+        str_port_to_int(joinPortInt, myPORT)
+        peer_info.join.ip = joinAddrInt;
+        peer_info.join.port = joinPortInt;
+        peer_info.join.id = (byte16) atoi(joinID);
+
+        join(joinAddrInt, joinPortInt, (byte16) atoi(myID)); //ask for next_Peer_info [rec notify()]
+    }
+
+
     loop {
-        // TODO: select
         int new_sock = get_new_connection(sock_fd);
         int code = receive(new_sock, receive_handler);
         if (code == STATUS_OK) {
@@ -216,3 +211,4 @@ DEBUGGABLE_MAIN(argc, argv)
         }
     }
 }
+
