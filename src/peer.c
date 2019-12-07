@@ -102,12 +102,12 @@ NETWORK_RECEIVE_HANDLER(receive_handler, rec, sock_fd) {
         }else if (decodedData.join) {
             LOG("Join");
             if (id_is_between(decodedData.hashId, peer_info.this, peer_info.prev)) {
-                // correct prev_info.prev
+                // correct peer_info.prev
                 peer_info.prev.ip = decodedData.nodeIp;
                 peer_info.prev.port = decodedData.nodePort;
                 peer_info.prev.id = decodedData.nodeId;
                 // notify join peer
-                notify(peer_info.join.ip, peer_info.join.port, peer_info.this); //send Peer_protocol to 1# with data from 2# -> set data as peer_info-next
+                notify(peer_info.join.ip, peer_info.join.port, peer_info.this); //send Peer_protocol to #1 with data from #2 -> set data as peer_info-next
             } else {
                 LOG("Not found, redirecting to next peer");
                 int_addr_to_str(nodeIp, peer_info.next.ip)
@@ -123,9 +123,9 @@ NETWORK_RECEIVE_HANDLER(receive_handler, rec, sock_fd) {
 
         } else if (decodedData.stabilize){
             LOG("Stabilize");
-            if(decodedData.nodeId == peer_info.prev.id) {
+            if(decodedData.nodeId == peer_info.prev.id && //TODO NOT_BASE_PEER) {
                 stabilize(peer_info.next, peer_info.this); //send Peer_protocol to #1 with infos from #2
-            } else if (decodedData.nodeId != peer_info.prev.id) {
+            } else {
                 notify(decodedData.nodeIp, decodedData.nodePort, peer_info.prev);
 
         } else if (decodedData.reply) {
