@@ -118,7 +118,7 @@ PeerProtocol make_peerProtocol(bool reply, bool lookup, byte16 hashID, Peer peer
     return result;
 }
 
-bool lookup_is_responsible(byte16 hash_id, Peer this, Peer prev){
+bool id_is_between(byte16 hash_id, Peer this, Peer prev){
     return in_range((byte16) hash_id, (byte16) this.id, (byte16) prev.id);
 }
 

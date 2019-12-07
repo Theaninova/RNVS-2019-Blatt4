@@ -92,17 +92,28 @@ NETWORK_RECEIVE_HANDLER(receive_handler, rec, sock_fd) {
         PeerProtocol decodedData = {};       //build PeerHeader
         decode_peerProtocol(rec->data, &decodedData);
 
-        if (decodedData.lookup) {
-            LOG("Lookup");
-            if (lookup_is_responsible(decodedData.hashId, peer_info.next, peer_info.this)) {
-                LOG("Next peer is responsible");
-                send_found_lookup(&decodedData, peer_info.next);
+        // join_request
+        if (decodedData.join) {
+            LOG("Join");
+            if (id_is_between(decodedData.hashId, peer_info.this, peer_info.prev)) {
+                // correct prev peer
+                peer_info.prev.ip = decodedData.nodeIp;
+                peer_info.prev.port = decodedData.nodePort;
+                peer_info.prev.id = decodedData.nodeId;
+                // notify join peer
+                notify(peer_info.join, peer_info.this); //set peer_info.next from #1 to peer_info.this from #2
             } else {
                 LOG("Not found, redirecting to next peer");
                 int_addr_to_str(nodeIp, peer_info.next.ip)
                 int_port_to_str(nodePort, peer_info.next.port)
                 direct_send(nodeIp, nodePort, rec->data, rec->data_length);
             }
+        } else if (decodedData.notify) {
+            LOG("Notify");
+            //TODO
+        } else if (decodedData.stabilize){
+            //TODO
+
         } else if (decodedData.reply) {
             LOG("Reply");
             unknown *current_request = NULL;
@@ -119,6 +130,18 @@ NETWORK_RECEIVE_HANDLER(receive_handler, rec, sock_fd) {
             redirect(next_node_sock, client_sock);
             next_job_in_queue();
 
+        } else if (decodedData.lookup) {
+            LOG("Lookup");
+            if (id_is_between(decodedData.hashId, peer_info.next, peer_info.this)) {
+                LOG("Next peer is responsible");
+                send_found_lookup(&decodedData, peer_info.next);
+            } else {
+                LOG("Not found, redirecting to next peer");
+                int_addr_to_str(nodeIp, peer_info.next.ip)
+                int_port_to_str(nodePort, peer_info.next.port)
+                direct_send(nodeIp, nodePort, rec->data, rec->data_length);
+            }
+
         } else {
             ERROR("Falsy Request");
         }
@@ -131,11 +154,11 @@ NETWORK_RECEIVE_HANDLER(receive_handler, rec, sock_fd) {
         LOG_BYTE(hashId);
         LOG_BYTE(peer_info.this.id);
 
-        if (lookup_is_responsible(hashId, peer_info.this, peer_info.prev)) {
+        if (id_is_between(hashId, peer_info.this, peer_info.prev)) {
             // this peer is responsible
             LOG("This peer is responsible");
             respond_as_responsible_peer(decodedData, sock_fd); //answer to client peer_hash_handler(decodedData, sock_fd);
-        } else if (lookup_is_responsible(hashId, peer_info.next, peer_info.this)) {
+        } else if (id_is_between(hashId, peer_info.next, peer_info.this)) {
             // next peer is responsible
             LOG("Next peer is responsible");
             int_addr_to_str(next_addr, peer_info.next.ip)

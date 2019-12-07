@@ -32,6 +32,11 @@ typedef struct {
 
 typedef struct {
     bool control;
+    bool finger;
+    bool fack;
+    bool join;
+    bool notify;
+    bool stabilize;
     bool reply;
     bool lookup;
     byte16 hashId;
@@ -138,7 +143,7 @@ size_t clientProtocolCalculateSize(ClientProtocol *data);
  * @param prev the previous peer
  * @return whether the peer is responsible
  */
-bool lookup_is_responsible(byte16 hash_id, Peer this, Peer prev);
+bool id_is_between(byte16 hash_id, Peer this, Peer prev);
 
 /**
  * Sends a lookup request for when there was a node found that matches
