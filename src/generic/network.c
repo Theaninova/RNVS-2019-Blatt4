@@ -175,7 +175,69 @@ int32 get_new_connection(int32 sock_fd) {
     return new_fd;
 }
 
-Response direct_receive(int32 sock_fd) {
+
+Response *direct_receive(int32 sock_fd, bool status) {                                              // not yet testet
+    Response response;
+    (uint8_t *) response.data = malloc(BUFFER_SIZE * sizeof(uint8_t));
+    response.data_length = (recv(sock_fd, (uint8_t *) response.data, BUFFER_SIZE, 0);
+
+    if(response.data_length < BUFFER_SIZE){ // one call or last call
+        realloc((uint8_t *) response.data, response.data_length);
+    }
+    else if(response.data_length == BUFFER_SIZE) {  // Buffer full -> new recur. round
+        Response *conc = direct_receive(sock_fd, 0);
+        uint8_t *data_conc = realloc(response.data, conc->data_length + response.data_length);
+        memcpy(data_conc, response->data, response.data_length);    // <...block(n-1)...|...empty...|>
+        memcpy((data_conc + response.data_length), conc->data, conc.data_length);   // <...block(n-1)...|...block(n)...|>
+        response.data_length += conc->data_length;
+        if(status == 0) free(conc->data);
+    }
+    else{   // no more data after Buffer full or didn't receive data
+        ERROR("Socket closed / Receive complete");
+        free(response.data);
+    }
+
+    if(status == 1){
+    #ifdef DEBUG
+            printf("[LOG]:   Received chunk with %zu bytes\n", response.data_length);
+    #endif
+            response.status_code = STATUS_OK;
+            LOG_INT((int32) response.data_length);
+    }
+
+    return &response;
+}
+
+int32 receive(int32 sock_fd, NETWORK_RECEIVE_FNPTR(callback)) {
+    Response *response = direct_receive(sock_fd, 1);
+
+    callback(response, sock_fd);
+
+    return response->status_code;
+}
+
+int32 redirect(int32 sock_from, int32 sock_to) {
+    Response *response = direct_receive(sock_from, 1);
+
+    send(sock_to, response->data, response->data_length);
+
+    return response->status_code;
+}
+
+int32 direct_send(string addr, string port, unknown *data, size_t data_size) {
+    int32 sock_fd = setup_as_client(addr, port);
+    send(sock_fd, data, data_size);
+
+    return sock_fd;
+}
+
+
+
+
+
+
+/*
+Response direct_receive_(int32 sock_fd) {                                               // not used (to be removed)
     Response response = {};
 
     char buffer[BUFFER_SIZE];
@@ -187,7 +249,7 @@ Response direct_receive(int32 sock_fd) {
         ERROR("Socket is closed");
 
     // TODO?
-    /*while ((number_of_bytes = recv(sock_fd, buffer, BUFFER_SIZE, 0)) > 0) {
+    while ((number_of_bytes = recv(sock_fd, buffer, BUFFER_SIZE, 0)) > 0) {
 #ifdef DEBUG
         printf("[LOG]:   Received chunk with %d bytes\n", number_of_bytes);
 #endif
@@ -199,7 +261,7 @@ Response direct_receive(int32 sock_fd) {
         memcpy(tmp + total_number_of_bytes, buffer, number_of_bytes);
         response.data = tmp;
         total_number_of_bytes += number_of_bytes;
-    }*/
+    }
 
     if (total_number_of_bytes == 0) {
         LOG("Socket Closed");
@@ -215,25 +277,4 @@ Response direct_receive(int32 sock_fd) {
     return response;
 }
 
-int32 receive(int32 sock_fd, NETWORK_RECEIVE_FNPTR(callback)) {
-    Response response = direct_receive(sock_fd);
-
-    callback(&response, sock_fd);
-
-    return response.status_code;
-}
-
-int32 redirect(int32 sock_from, int32 sock_to) {
-    Response response = direct_receive(sock_from);
-
-    send(sock_to, response.data, response.data_length);
-
-    return response.status_code;
-}
-
-int32 direct_send(string addr, string port, unknown *data, size_t data_size) {
-    int32 sock_fd = setup_as_client(addr, port);
-    send(sock_fd, data, data_size);
-
-    return sock_fd;
-}
+ */
