@@ -8,14 +8,14 @@
 
 typedef struct{
     int8_t control;     //switch to turn thread off = 0
-    pthread_t pid;
-    PeerInfo Peer;
+    pthread_t tid;
+    PeerInfo current_Peer;
 }Stabilizer_ctrl_block;
 
 /**
  * Concurrently call stabilize function
  *
- * @param pointer to control block
+ * @param pointer to control block containing information about the thread and the current peer
  * @return (void) called using an independent thread
  */
 void *Stabilize_caller(void *block);

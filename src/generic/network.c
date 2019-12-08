@@ -6,6 +6,7 @@
 #include <signal.h>
 #include "network.h"
 #include "../helper/wulkanat/debug.h"
+#include "data_helper.h"
 
 #define BACKLOG 10     // how many pending connections queue will hold
 
@@ -176,21 +177,21 @@ int32 get_new_connection(int32 sock_fd) {
 }
 
 
-Response *direct_receive(int32 sock_fd, bool status) {                                              // not yet testet
+Response direct_receive(int32 sock_fd, bool status) {                                              // not yet testet
     Response response;
-    (uint8_t *) response.data = malloc(BUFFER_SIZE * sizeof(uint8_t));
-    response.data_length = (recv(sock_fd, (uint8_t *) response.data, BUFFER_SIZE, 0);
+    response.data = malloc(BUFFER_SIZE * sizeof(uint8_t));
+    response.data_length = (recv(sock_fd, (uint8_t *) response.data, BUFFER_SIZE, 0));
 
     if(response.data_length < BUFFER_SIZE){ // one call or last call
-        realloc((uint8_t *) response.data, response.data_length);
+        response.data = realloc((uint8_t *) response.data, response.data_length);
     }
     else if(response.data_length == BUFFER_SIZE) {  // Buffer full -> new recur. round
-        Response *conc = direct_receive(sock_fd, 0);
-        uint8_t *data_conc = realloc(response.data, conc->data_length + response.data_length);
-        memcpy(data_conc, response->data, response.data_length);    // <...block(n-1)...|...empty...|>
-        memcpy((data_conc + response.data_length), conc->data, conc.data_length);   // <...block(n-1)...|...block(n)...|>
-        response.data_length += conc->data_length;
-        if(status == 0) free(conc->data);
+        Response conc = direct_receive(sock_fd, 0);
+        uint8_t *data_conc = realloc(response.data, conc.data_length + response.data_length);
+        memcpy(data_conc, response.data, response.data_length);    // <...block(n-1)...|...empty...|>
+        memcpy((data_conc + response.data_length), conc.data, conc.data_length);   // <...block(n-1)...|...block(n)...|>
+        response.data_length += conc.data_length;
+        if(status == 0) free(conc.data);
     }
     else{   // no more data after Buffer full or didn't receive data
         ERROR("Socket closed / Receive complete");
@@ -205,23 +206,23 @@ Response *direct_receive(int32 sock_fd, bool status) {                          
             LOG_INT((int32) response.data_length);
     }
 
-    return &response;
+    return response;
 }
 
 int32 receive(int32 sock_fd, NETWORK_RECEIVE_FNPTR(callback)) {
-    Response *response = direct_receive(sock_fd, 1);
+    Response response = direct_receive(sock_fd, 1);
 
-    callback(response, sock_fd);
+    callback(&response, sock_fd);
 
-    return response->status_code;
+    return response.status_code;
 }
 
 int32 redirect(int32 sock_from, int32 sock_to) {
-    Response *response = direct_receive(sock_from, 1);
+    Response response = direct_receive(sock_from, 1);
 
-    send(sock_to, response->data, response->data_length);
+    send(sock_to, response.data, response.data_length);
 
-    return response->status_code;
+    return response.status_code;
 }
 
 int32 direct_send(string addr, string port, unknown *data, size_t data_size) {
@@ -229,6 +230,18 @@ int32 direct_send(string addr, string port, unknown *data, size_t data_size) {
     send(sock_fd, data, data_size);
 
     return sock_fd;
+}
+
+void join(Peer *current) {
+    //PeerInfo *successor = current;
+
+
+}
+
+void stabilize(Peer current) {
+    // successor = thisnode-> successor
+    // node tmp = thisnode->successor->predecessor
+    // if tmp != thisnode nofify(successor->predecessor = thisnode), (do same with former predecessor)
 }
 
 
