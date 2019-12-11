@@ -102,4 +102,6 @@ int32 direct_send(string addr, string port, unknown *data, size_t data_size);
 
 void join(string joinAddrInt, string joinPortInt, Peer join);
 
-void notify(byte32 target_node_IP, byte16 targe_node_Port, Peer next_peer_info)
+void notify(byte32 target_node_IP, byte16 targe_node_Port, Peer next_peer_info);
+
+void stabilize(Peer next_peer_info, Peer this_peer_info);

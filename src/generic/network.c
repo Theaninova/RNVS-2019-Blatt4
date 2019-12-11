@@ -251,10 +251,23 @@ void notify(byte32 target_node_IP, byte16 target_node_Port, Peer next_peer_info)
     notify_request->nodeId      =   next_peer_info.id;
     notify_request->nodeIp      =   next_peer_info.ip;
     notify_request->nodePort    =   next_peer_info.port;
-    int_addr_to_str(notifyaddr_int, target_node_IP)
-    int_port_to_str(notifyport_int, target_node_Port)
-    direct_send(notifyaddr_int, notifyport_int, (PeerProtocol*) notify_request, sizeof(PeerProtocol));  // correct size?
+    int_addr_to_str(notifyaddr_str, target_node_IP)
+    int_port_to_str(notifyport_str, target_node_Port)
+    direct_send(notifyaddr_str, notifyport_str, (PeerProtocol*) notify_request, sizeof(PeerProtocol));  // correct size?
     if(sizeof(PeerProtocol) == sizeof(notify_request) == NULL) LOG("size ok, nofity, Network.c");
+}
+
+void stabilize(byte32 next_node_IP, byte16 next_node_Port, Peer this_peer_info){
+    PeerProtocol *stabilize_request;
+    stabilize_request->stabilize    =   1;
+    stabilize_request->control      =   1;
+    stabilize_request->nodeId       =   this_peer_info.id;
+    stabilize_request->nodeIp       =   this_peer_info.ip;
+    stabilize_request->nodePort     =   this_peer_info.port;
+    int_addr_to_str(nextaddr_str, next_node_IP)
+    int_port_to_str(nextport_str, next_node_Port)
+    direct_send(nextaddr_str, nextport_str, (PeerProtocol*) stabilize_request, sizeof(PeerProtocol));  // correct size?
+    if(sizeof(PeerProtocol) == sizeof(stabilize_request) == NULL) LOG("size ok, stabilize, Network.c");
 }
 
 void stabilize(Peer current) {
