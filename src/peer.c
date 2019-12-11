@@ -228,14 +228,12 @@ DEBUGGABLE_MAIN(argc, argv)
     } else {
         STR_ARG(joinIP, 4);
         STR_ARG(joinPORT, 5);
-        STR_ARG(joinID, 3);
-        str_addr_to_int(joinAddrInt, myIP)
-        str_port_to_int(joinPortInt, myPORT)
+        str_addr_to_int(joinAddrInt, joinIP)
+        str_port_to_int(joinPortInt, joinPORT)
         peer_info.join.ip = joinAddrInt;
         peer_info.join.port = joinPortInt;
-        peer_info.join.id = (byte16) atoi(joinID);
 
-        join(joinAddrInt, joinPortInt, (byte16) atoi(myID));
+        join(joinIP, joinPORT, peer_info.this);
     }
 
     pthread_create(&(ctrl_block.pid), NULL, Stabilize_caller, (void *)&ctrl_block);       // for time triggered concurrent stabilize caller
