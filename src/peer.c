@@ -128,7 +128,7 @@ NETWORK_RECEIVE_HANDLER(receive_handler, rec, sock_fd) {
                 stabilize(peer_info.next, peer_info.this); //send Peer_protocol to #1 with infos from #2
             } else {
                 notify(decodedData.nodeIp, decodedData.nodePort, peer_info.prev);
-
+            }
         } else if (decodedData.reply) {
             LOG("Reply");
             unknown *current_request = NULL;
