@@ -49,6 +49,7 @@ typedef struct {
     byte16 id;
     byte16 port;
     byte32 ip;
+    bool is_base;
 } Peer;
 
 typedef struct {
