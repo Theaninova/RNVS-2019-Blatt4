@@ -7,6 +7,7 @@
 #include <netdb.h>
 #include <arpa/inet.h>
 #include "../helper/wulkanat/descriptive_types.h"
+#include "data_helper.h"
 
 #define STATUS_OK 200
 #define STATUS_SOCKET_CLOSED 404
@@ -98,3 +99,7 @@ int32 redirect(int32 sock_from, int32 sock_to);
  * @return the socket of the connection
  */
 int32 direct_send(string addr, string port, unknown *data, size_t data_size);
+
+void join(string joinAddrInt, string joinPortInt, Peer join);
+
+void notify(byte32 target_node_IP, byte16 targe_node_Port, Peer next_peer_info)

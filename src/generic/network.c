@@ -7,6 +7,7 @@
 #include "network.h"
 #include "../helper/wulkanat/debug.h"
 #include "data_helper.h"
+#include <assert.h>
 
 #define BACKLOG 10     // how many pending connections queue will hold
 
@@ -232,10 +233,28 @@ int32 direct_send(string addr, string port, unknown *data, size_t data_size) {
     return sock_fd;
 }
 
-void join(Peer *current) {
-    //PeerInfo *successor = current;
+void join(string joinAddrInt, string joinPortInt, Peer new_peer_info) {
+    PeerProtocol *join_request;
+    join_request->join       =   1;
+    join_request->control    =   1;
+    join_request->nodeId     =   new_peer_info.id;
+    join_request->nodeIp     =   new_peer_info.ip;
+    join_request->nodePort   =   new_peer_info.port;
+    direct_send(joinAddrInt, joinPortInt, (PeerProtocol*) join_request, sizeof(PeerProtocol));  // correct size?
+    if(sizeof(PeerProtocol) == sizeof(join_request) == NULL) LOG("size ok, join, Network.c");
+}
 
-
+void notify(byte32 target_node_IP, byte16 target_node_Port, Peer next_peer_info){
+    PeerProtocol *notify_request;
+    notify_request->control     =   1;
+    notify_request->notify      =   1;
+    notify_request->nodeId      =   next_peer_info.id;
+    notify_request->nodeIp      =   next_peer_info.ip;
+    notify_request->nodePort    =   next_peer_info.port;
+    int_addr_to_str(notifyaddr_int, target_node_IP)
+    int_port_to_str(notifyport_int, target_node_Port)
+    direct_send(notifyaddr_int, notifyport_int, (PeerProtocol*) notify_request, sizeof(PeerProtocol));  // correct size?
+    if(sizeof(PeerProtocol) == sizeof(notify_request) == NULL) LOG("size ok, nofity, Network.c");
 }
 
 void stabilize(Peer current) {
