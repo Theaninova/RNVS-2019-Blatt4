@@ -284,7 +284,7 @@ void buildfinger(byte32 next_node_IP, byte16 next_node_Port, Peer this_peer_info
     //while(tmp->next_finger != NULL) {
     for(byte16 i = 0; i < 16; i++){                         // numbers can be 16 bits
         if(this_peer_info.next_finger != NULL) {
-            finger_request->nodeId  =  this_peer_info.id + + ( (2 << i) % 65536);
+            finger_request->nodeId  =  this_peer_info.id + ( (2 << i) % 65536);
             int_addr_to_str(nextaddr_str, next_node_IP)
             int_port_to_str(nextport_str, next_node_Port)
             direct_send(nextaddr_str, nextport_str, (PeerProtocol *) finger_request, sizeof(PeerProtocol));
