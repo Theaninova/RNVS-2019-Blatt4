@@ -277,17 +277,19 @@ void buildfinger(byte32 next_node_IP, byte16 next_node_Port, Peer this_peer_info
     finger_request->lookup  =   1;
     finger_request->control =   1;
     finger_request->finger  =   1;                          // sollen die anderen Nodes dann auch direkt ihre Fingertable aufbauen oder bezieht sich das auf jeden Node?
-    finger_request->nodeId  =   this_peer_info.id;          // TODO: korrekt?
     finger_request->nodeIp  =   this_peer_info.ip;
     finger_request->nodePort=   this_peer_info.port;
 
-
-
-    /*
-    int_addr_to_str(nextaddr_str, next_node_IP)
-    int_port_to_str(nextport_str, next_node_Port)
-    direct_send(nextaddr_str, nextport_str, (PeerProtocol*) finger_request, sizeof(PeerProtocol));
-     */
+    Peer* tmp = &this_peer_info.next_finger;
+    //while(tmp->next_finger != NULL) {
+    for(byte16 i = 0; i < 16; i++){                         // numbers can be 16 bits
+        if(this_peer_info.next_finger != NULL) {
+            finger_request->nodeId  =  this_peer_info.id + + ( (2 << i) % 65536);
+            int_addr_to_str(nextaddr_str, next_node_IP)
+            int_port_to_str(nextport_str, next_node_Port)
+            direct_send(nextaddr_str, nextport_str, (PeerProtocol *) finger_request, sizeof(PeerProtocol));
+        }
+    }
 }
 
 
