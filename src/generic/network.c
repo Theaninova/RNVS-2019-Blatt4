@@ -242,8 +242,7 @@ void join(string joinAddrInt, string joinPortInt, Peer new_peer_info) {
     join_request->nodePort   =   new_peer_info.port;
     direct_send(joinAddrInt, joinPortInt, (PeerProtocol*) join_request, sizeof(PeerProtocol));  // correct size?
     if(sizeof(PeerProtocol) == sizeof(join_request) == NULL) LOG("size ok, join, Network.c");
-    new_peer_info.next_finger = calloc(1, sizeof(Peer));                      // TODO soll der nächste Nachbar hier schon in die Liste eingefügt werden?
-}
+    }
 
 void notify(byte32 target_node_IP, byte16 target_node_Port, Peer next_peer_info){
     PeerProtocol *notify_request;
@@ -255,7 +254,6 @@ void notify(byte32 target_node_IP, byte16 target_node_Port, Peer next_peer_info)
     int_addr_to_str(notifyaddr_str, target_node_IP)
     int_port_to_str(notifyport_str, target_node_Port)
     direct_send(notifyaddr_str, notifyport_str, (PeerProtocol*) notify_request, sizeof(PeerProtocol));  // correct size?
-    if(sizeof(PeerProtocol) == sizeof(notify_request) == NULL) LOG("size ok, nofity, Network.c");
 }
 
 void stabilize(byte32 next_node_IP, byte16 next_node_Port, Peer this_peer_info){
@@ -268,7 +266,6 @@ void stabilize(byte32 next_node_IP, byte16 next_node_Port, Peer this_peer_info){
     int_addr_to_str(nextaddr_str, next_node_IP)
     int_port_to_str(nextport_str, next_node_Port)
     direct_send(nextaddr_str, nextport_str, (PeerProtocol*) stabilize_request, sizeof(PeerProtocol));  // correct size?
-    if(sizeof(PeerProtocol) == sizeof(stabilize_request) == NULL) LOG("size ok, stabilize, Network.c");
 }
 
 
@@ -276,7 +273,7 @@ void buildfinger(byte32 next_node_IP, byte16 next_node_Port, Peer this_peer_info
     PeerProtocol *finger_request;
     finger_request->lookup  =   1;
     finger_request->control =   1;
-    finger_request->finger  =   1;                          // sollen die anderen Nodes dann auch direkt ihre Fingertable aufbauen oder bezieht sich das auf jeden Node?
+    finger_request->finger  =   0;                          // sollen die anderen Nodes dann auch direkt ihre Fingertable aufbauen oder bezieht sich das auf jeden Node?
     finger_request->nodeIp  =   this_peer_info.ip;
     finger_request->nodePort=   this_peer_info.port;
 
