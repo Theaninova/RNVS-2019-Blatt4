@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(Blatt4)
+project(peer)
 
 set(CMAKE_CXX_STANDARD 11)
 
@@ -10,7 +10,7 @@ include_directories(src/helper/max)
 include_directories(src/helper/wulkanat)
 include_directories(src/libraries)
 
-add_executable(Blatt4
+add_executable(peer
         src/generic/data_helper.c
         src/generic/data_helper.h
         src/generic/hash_helper.c

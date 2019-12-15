@@ -243,9 +243,9 @@ NETWORK_RECEIVE_HANDLER(receive_handler, rec, sock_fd) {
 #pragma clang diagnostic pop
 DEBUGGABLE_MAIN(argc, argv)
 
-    STR_ARG(myIP, 1);
-    STR_ARG(myPORT, 2);
-    DEFAULT_STR_ARG(myID, 3,0);
+    STR_ARG(myIP, 0);
+    STR_ARG(myPORT, 1);
+    DEFAULT_STR_ARG(myID, 2,0);
     str_addr_to_int(myAddrInt, myIP)
     str_port_to_int(myPortInt, myPORT)
     peer_info.this.ip = myAddrInt;
@@ -263,8 +263,8 @@ DEBUGGABLE_MAIN(argc, argv)
         ctrl_block.current_Peer = peer_info;
 
     } else {
-        STR_ARG(joinIP, 4);
-        STR_ARG(joinPORT, 5);
+        STR_ARG(joinIP, 3);
+        STR_ARG(joinPORT, 4);
         str_addr_to_int(joinAddrInt, joinIP)
         str_port_to_int(joinPortInt, joinPORT)
         peer_info.join.ip = joinAddrInt;
