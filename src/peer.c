@@ -96,11 +96,12 @@ NETWORK_RECEIVE_HANDLER(receive_handler, rec, sock_fd) {
         decode_peerProtocol(rec->data, &decodedData);
 
 
-        if (decodedData.finger ){                                               // Assumption: a peer responding to a finger-lookup has finger and lookup set, a request to build finger has only finger bit
-            if(!decodedData.lookup) {
+        if (decodedData.finger) {                                               // Assumption: a peer responding to a finger-lookup has finger and lookup set, a request to build finger has only finger bit
+            if (!decodedData.lookup) {
                 LOG("Finger");
                 buildfinger(peer_info.next.ip, peer_info.next.port, peer_info.this);  // Peer starts finger-requests
             }
+            /*
             if(decodedData.lookup) {                                            // Is a peer responding to a finger lookup request -> redirects to its neighbor and sends responsible
                 LOG("Finger: found and redirect to next");
                 int_addr_to_str(nodeIp, peer_info.next.ip)
@@ -110,6 +111,7 @@ NETWORK_RECEIVE_HANDLER(receive_handler, rec, sock_fd) {
             }
             if(decodedData.reply) {                                                     // received a reply to a finger-lookup (only the initiator peer executing buildfinger())
                 LOG("A finger responded");
+
                 if(decodedData.hashId != peer_info.this.id) {                           // if responding is not initiator of the finger build request
                     Peer* new_raw_finger_entry = calloc(1, sizeof(Peer));
                     new_raw_finger_entry->port = decodedData.nodePort;                  // build up a raw fingertable containing all neighbors up to this node
@@ -121,11 +123,14 @@ NETWORK_RECEIVE_HANDLER(receive_handler, rec, sock_fd) {
                     LOG("New entry added");
                     check_chord_rules(&raw_fingers, &peer_info);
                 }
+
+
             }
+             */
         } else if (decodedData.fack) {
             LOG("Fack");
             ERROR("Fack should not be set!");
-        }else if (decodedData.join) {
+        } else if (decodedData.join) {
             LOG("Join");
             if (id_is_between(decodedData.hashId, peer_info.this, peer_info.prev)) {
                 // correct peer_info.prev
@@ -133,7 +138,8 @@ NETWORK_RECEIVE_HANDLER(receive_handler, rec, sock_fd) {
                 peer_info.prev.port = decodedData.nodePort;
                 peer_info.prev.id = decodedData.nodeId;
                 // notify join peer
-                notify(decodedData.nodeIp, decodedData.nodePort, peer_info.this); //send Peer_protocol to #1 with data from #2 -> set data as peer_info-next
+                notify(decodedData.nodeIp, decodedData.nodePort,
+                       peer_info.this); //send Peer_protocol to #1 with data from #2 -> set data as peer_info-next
             } else {
                 LOG("Not found, redirecting to next peer");
                 int_addr_to_str(nodeIp, peer_info.next.ip)
@@ -148,10 +154,11 @@ NETWORK_RECEIVE_HANDLER(receive_handler, rec, sock_fd) {
             peer_info.next.port = decodedData.nodePort;
             peer_info.next.id = decodedData.nodeId;
 
-        } else if (decodedData.stabilize){
+        } else if (decodedData.stabilize) {
             LOG("Stabilize");
-            if(decodedData.nodeId == peer_info.prev.id && !peer_info.this.is_base) {
-                stabilize(peer_info.next.ip, peer_info.next.port, peer_info.this); //send Peer_protocol to #1 with infos from #2
+            if (decodedData.nodeId == peer_info.prev.id && !peer_info.this.is_base) {
+                stabilize(peer_info.next.ip, peer_info.next.port,
+                          peer_info.this); //send Peer_protocol to #1 with infos from #2
             } else {
                 notify(decodedData.nodeIp, decodedData.nodePort, peer_info.prev);
             }
@@ -164,7 +171,8 @@ NETWORK_RECEIVE_HANDLER(receive_handler, rec, sock_fd) {
 
             int_addr_to_str(nodeIp, decodedData.nodeIp)
             int_port_to_str(nodePort, decodedData.nodePort)
-            int32 next_node_sock = direct_send(nodeIp, nodePort, current_request, clientProtocolCalculateSize(&current_decoded_request));
+            int32 next_node_sock = direct_send(nodeIp, nodePort, current_request,
+                                               clientProtocolCalculateSize(&current_decoded_request));
 
             int32 client_sock = 0;
             queue_pop(sockets, client_sock)
@@ -172,23 +180,18 @@ NETWORK_RECEIVE_HANDLER(receive_handler, rec, sock_fd) {
             next_job_in_queue();
 
         } else if (decodedData.lookup) {
-            if(peer_info.this.next_finger == NULL) {                                        // No fingertable yet
-                LOG("Lookup");
-                if (id_is_between(decodedData.hashId, peer_info.next, peer_info.this)) {
-                    LOG("Next peer is responsible");
-                    send_found_lookup(&decodedData, peer_info.next);
-                } else {
-                    LOG("Not found, redirecting to next peer");
-                    int_addr_to_str(nodeIp, peer_info.next.ip)
-                    int_port_to_str(nodePort, peer_info.next.port)
-                    direct_send(nodeIp, nodePort, rec->data, rec->data_length);
-
-                }
-            }
-            else {                                                                          // Finger table exists
+            if (peer_info.this.next_finger != NULL) {                                        // No fingertable yet
                 LOG("Lookup using finger table");
-                //for(peer_info.this->)                                                     // TODO lookup using finger table
 
+            }
+            if (id_is_between(decodedData.hashId, peer_info.next, peer_info.this)) {
+                LOG("Next peer is responsible");
+                send_found_lookup(&decodedData, peer_info.next);
+            } else {
+                LOG("Not found, redirecting to next peer");
+                int_addr_to_str(nodeIp, peer_info.next.ip)
+                int_port_to_str(nodePort, peer_info.next.port)
+                direct_send(nodeIp, nodePort, rec->data, rec->data_length);
             }
 
         } else {

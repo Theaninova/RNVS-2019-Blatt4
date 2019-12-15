@@ -1,12 +1,14 @@
 #pragma once
 
+#include <stdio.h>
 #include <stdint.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 #include "data_helper.h"
 #include "../helper/wulkanat/descriptive_types.h"
-#include <math.h>
+
 
 #define ACK_BIT ((uint8_t) (0x01u << 4u))
 #define GET_BIT ((uint8_t) (0x01u << 5u))
@@ -170,13 +172,16 @@ void send_found_lookup(PeerProtocol *decodedData, Peer next);
  * @param   a raw finger table for count increment
  * @return  a finger table entry not used yet
  */
+
+/*
 Peer* find_last_entry(Peer* next, raw_fingertable* raw_fingers);
 
-/**
+
  * Check raw finger table to meed the chord rules -> these are copied to the Peer's "real" finger table
  *
  * @param   the raw finger table of all received nodes
  * @param   current peer that was requested to build a peer table
  * @return  void
- */
+
 void check_chord_rules(raw_fingertable* raw_fingers, PeerInfo* current);
+*/

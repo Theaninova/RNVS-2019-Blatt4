@@ -24,10 +24,7 @@ add_executable(Blatt4
         src/helper/wulkanat/commander.h
         src/helper/wulkanat/debug.h
         src/helper/wulkanat/descriptive_types.h
-        src/helper/wulkanat/flow_plus.h
-        src/helper/wulkanat/friendly_heap.h
         src/helper/wulkanat/queue.h
-        src/helper/wulkanat/smart_pointer.h
         src/libraries/uthash.h
         src/peer.c
         CMakeLists.txt)
