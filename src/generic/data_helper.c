@@ -145,3 +145,35 @@ void send_found_lookup(PeerProtocol *data, Peer next){
 
     direct_send(nodeIp, nodePort, encodedData, peerProtocolCalculateSize(data));
 }
+
+Peer* find_last_entry(Peer* next, raw_fingertable* raw_fingers){
+    if(next == NULL){
+        return next;
+    }
+    else{
+        (raw_fingers->count)++;
+        return find_last_entry(next->next_finger, raw_fingers);             // go to next entry and increment count by one
+    }
+}
+
+void check_chord_rules(raw_fingertable* raw_fingers, PeerInfo* current){        // TODO: please check this function...
+    Peer* tmp           = raw_fingers->fingers;
+    byte16 biggest_id   = 0;
+
+    for(byte16 i = 0; i<raw_fingers->count; i++){                           // look for biggest peer id
+        if(tmp->id > biggest_id) biggest_id = tmp->id;
+        tmp = tmp->next_finger;
+    }
+
+    byte16 number_of_fingers = floor( log2 ((float32) biggest_id) );
+
+    tmp   =   raw_fingers->fingers;
+    byte16  check_id;
+    for(byte16 i = 0; i<raw_fingers->count; i++){
+        check_id                =  (byte16) current->this.id + ( (byte32) pow(2, (float32) i) % (byte32) pow(2, (float32) number_of_fingers));
+        //if(id_is_between(check_id, tmp->)){
+        //    current->next_finger =
+        //}
+        current->this.next_finger    =   tmp;
+    }
+}

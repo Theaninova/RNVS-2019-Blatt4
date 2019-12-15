@@ -5,7 +5,6 @@ set(CMAKE_CXX_STANDARD 11)
 
 FIND_PACKAGE (Threads)
 
-
 include_directories(src/generic)
 include_directories(src/helper/max)
 include_directories(src/helper/wulkanat)

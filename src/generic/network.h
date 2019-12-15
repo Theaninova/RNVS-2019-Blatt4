@@ -100,8 +100,41 @@ int32 redirect(int32 sock_from, int32 sock_to);
  */
 int32 direct_send(string addr, string port, unknown *data, size_t data_size);
 
+/**
+ * Joining new arrived node
+ *
+ * @param address of a known node inside the network
+ * @param port of a known node inside the network
+ * @param new node's network information
+ * @return void
+ */
 void join(string joinAddrInt, string joinPortInt, Peer join);
 
-void notify(byte32 target_node_IP, byte16 targe_node_Port, Peer next_peer_info);
+/**
+ * Notifies to another node about network changes via peer protocol
+ *
+ * @param address of the node to inform
+ * @param port of the node to inform
+ * @param network information of the notifying node
+ * @return void
+ */
+void notify(byte32 target_node_IP, byte16 target_node_Port, Peer next_peer_info);
 
+/**
+ * Stabilizes the network to meet the general chord rules after changes
+ *
+ * @param address of the next node
+ * @param port of the next node
+ * @param network information of the predecessor
+ * @return void
+ */
 void stabilize(byte32 next_node_IP, byte16 next_node_Port, Peer this_peer_info);
+
+/**
+ * Build up finger table, function sends message to all peers to get a feedback of all alive. Afterwards the answers
+ * of the ids meeting the chord rules are saved to the finger table
+ *
+ * @param Peer info of the current block that requested the finger table to be build
+ * @return void
+ */
+void buildfinger(byte32 next_node_IP, byte16 next_node_Port, Peer this_peer_info);
