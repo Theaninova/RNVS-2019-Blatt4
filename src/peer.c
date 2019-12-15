@@ -125,7 +125,7 @@ NETWORK_RECEIVE_HANDLER(receive_handler, rec, sock_fd) {
         } else if (decodedData.stabilize){
             LOG("Stabilize");
             if(decodedData.nodeId == peer_info.prev.id && !peer_info.this.is_base) {
-                stabilize(peer_info.next, peer_info.this); //send Peer_protocol to #1 with infos from #2
+                stabilize(peer_info.next.ip, peer_info.next.port, peer_info.this); //send Peer_protocol to #1 with infos from #2
             } else {
                 notify(decodedData.nodeIp, decodedData.nodePort, peer_info.prev);
             }
