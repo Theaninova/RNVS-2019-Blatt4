@@ -6,6 +6,7 @@
 #include <string.h>
 #include "data_helper.h"
 #include "../helper/wulkanat/descriptive_types.h"
+#include <math.h>
 
 #define ACK_BIT ((uint8_t) (0x01u << 4u))
 #define GET_BIT ((uint8_t) (0x01u << 5u))
@@ -45,19 +46,27 @@ typedef struct {
     byte16 nodePort;
 } PeerProtocol;
 
-typedef struct {
-    byte16 id;
-    byte16 port;
-    byte32 ip;
-    bool is_base;
-} Peer;
+ struct peer{
+    byte16          ip;
+    byte16          port;
+    byte32          id;
+    bool            is_base;
+    struct peer*    next_finger;
+};
+typedef struct peer Peer;
 
 typedef struct {
-    Peer this;
-    Peer next;
-    Peer prev;
-    Peer join;
+    Peer    this;
+    Peer    next;
+    Peer    prev;
+    Peer    join;
 } PeerInfo;
+
+typedef struct {
+    Peer*   fingers;
+    Peer*   last_in_list;
+    byte16  count;
+}raw_fingertable;
 
 
 /**
@@ -153,3 +162,21 @@ bool id_is_between(byte16 hash_id, Peer this, Peer prev);
  * @return
  */
 void send_found_lookup(PeerProtocol *decodedData, Peer next);
+
+/**
+ * Recursively lookup the first not used entry in the raw finger table
+ *
+ * @param   a next peer
+ * @param   a raw finger table for count increment
+ * @return  a finger table entry not used yet
+ */
+Peer* find_last_entry(Peer* next, raw_fingertable* raw_fingers);
+
+/**
+ * Check raw finger table to meed the chord rules -> these are copied to the Peer's "real" finger table
+ *
+ * @param   the raw finger table of all received nodes
+ * @param   current peer that was requested to build a peer table
+ * @return  void
+ */
+void check_chord_rules(raw_fingertable* raw_fingers, PeerInfo* current);

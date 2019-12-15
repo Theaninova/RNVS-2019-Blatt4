@@ -1,7 +1,9 @@
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.10)
 project(Blatt4)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 11)
+
+FIND_PACKAGE (Threads)
 
 include_directories(src/generic)
 include_directories(src/helper/max)
@@ -27,7 +29,7 @@ add_executable(Blatt4
         src/helper/wulkanat/queue.h
         src/helper/wulkanat/smart_pointer.h
         src/libraries/uthash.h
-        src/client.c
         src/peer.c
-        src/server.c
         CMakeLists.txt)
+
+SET(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} "-pthread")
