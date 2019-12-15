@@ -7,6 +7,7 @@
 #include "helper/wulkanat/queue.h"
 #include "helper/wulkanat/flow_plus.h"
 #include "helper/max/concurrent_task.h"
+#include <pthread.h>
 
 QUEUE(client_requests, unknown*)
 QUEUE(sockets, int32)
@@ -125,7 +126,7 @@ NETWORK_RECEIVE_HANDLER(receive_handler, rec, sock_fd) {
         } else if (decodedData.stabilize){
             LOG("Stabilize");
             if(decodedData.nodeId == peer_info.prev.id && !peer_info.this.is_base) {
-                stabilize(peer_info.next, peer_info.this); //send Peer_protocol to #1 with infos from #2
+                stabilize(peer_info.next.ip, peer_info.next.port, peer_info.this); //send Peer_protocol to #1 with infos from #2
             } else {
                 notify(decodedData.nodeIp, decodedData.nodePort, peer_info.prev);
             }
@@ -223,7 +224,7 @@ DEBUGGABLE_MAIN(argc, argv)
 
     if (argc <= 4) { //basis Peer
 
-        ctrl_block.Peer = peer_info;
+        ctrl_block.current_Peer = peer_info;
 
     } else {
         STR_ARG(joinIP, 4);
@@ -236,7 +237,7 @@ DEBUGGABLE_MAIN(argc, argv)
         join(joinIP, joinPORT, peer_info.this);
     }
 
-    pthread_create(&(ctrl_block.pid), NULL, Stabilize_caller, (void *)&ctrl_block);       // for time triggered concurrent stabilize caller
+    pthread_create(&(ctrl_block.tid), NULL, Stabilize_caller, (void *)&ctrl_block);       // for time triggered concurrent stabilize caller
 
     loop {
         int new_sock = get_new_connection(sock_fd);

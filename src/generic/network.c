@@ -270,11 +270,7 @@ void stabilize(byte32 next_node_IP, byte16 next_node_Port, Peer this_peer_info){
     if(sizeof(PeerProtocol) == sizeof(stabilize_request) == NULL) LOG("size ok, stabilize, Network.c");
 }
 
-void stabilize(Peer current) {
-    // successor = thisnode-> successor
-    // node tmp = thisnode->successor->predecessor
-    // if tmp != thisnode nofify(successor->predecessor = thisnode), (do same with former predecessor)
-}
+
 
 
 

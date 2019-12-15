@@ -104,4 +104,4 @@ void join(string joinAddrInt, string joinPortInt, Peer join);
 
 void notify(byte32 target_node_IP, byte16 targe_node_Port, Peer next_peer_info);
 
-void stabilize(Peer next_peer_info, Peer this_peer_info);
+void stabilize(byte32 next_node_IP, byte16 next_node_Port, Peer this_peer_info);
