@@ -11,4 +11,4 @@
  * @return bool, true if it's in range
  *
  */
-bool in_range(byte32 value, byte32 upper, byte32 lower);
+#define in_range(value, upper, lower) (upper > value && lower < value)

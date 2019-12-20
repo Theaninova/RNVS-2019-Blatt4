@@ -16,11 +16,16 @@
 #define DELETE_BIT ((uint8_t) (0x01u << 7u))
 
 #define CONTROL_BIT (0x01u << 0u)
+#define FINGER_BIT (0x01u << 1u)
+#define FACK_BIT (0x01u << 2u)
+#define JOIN_BIT (0x01u << 3u)
+#define NOTIFY_BIT (0x01u << 4u)
+#define STABILIZE_BIT (0x01u << 5u)
 #define REPLY_BIT (0x01u << 6u)
 #define LOOKUP_BIT (0x01u << 7u)
 
 #define MASK &
-#define COMBINE +
+#define COMBINE |
 
 typedef struct {
     bool act;
@@ -49,19 +54,19 @@ typedef struct {
 } PeerProtocol;
 
  struct peer{
-    byte16          ip;
+    byte32          ip;
     byte16          port;
-    byte32          id;
+    byte16          id;
     bool            is_base;
     struct peer*    next_finger;
 };
 typedef struct peer Peer;
 
 typedef struct {
-    Peer    this;
-    Peer    next;
-    Peer    prev;
-    Peer    join;
+    Peer*    this;
+    Peer*    next;
+    Peer*    prev;
+    Peer*    join;
 } PeerInfo;
 
 typedef struct {
@@ -105,7 +110,7 @@ void *encode_peerProtocol(PeerProtocol *data);
  * @param peer the peer
  * @return the finished PeerProtocol
  */
-PeerProtocol make_peerProtocol(bool reply, bool lookup, byte16 hashID, Peer peer);
+PeerProtocol make_peerProtocol(bool reply, bool lookup, byte16 hashID, Peer* peer);
 
 /**
  * Creates a peerProtocol from a clientProtocol
@@ -113,15 +118,14 @@ PeerProtocol make_peerProtocol(bool reply, bool lookup, byte16 hashID, Peer peer
  * @param clientProtocol the protocol to use as a template
  * @return the peerProtocol
  */
-PeerProtocol peerProtocol_from_clientProtocol(ClientProtocol *clientProtocol, Peer peer);
+PeerProtocol peerProtocol_from_clientProtocol(ClientProtocol *clientProtocol, Peer* peer);
 
 /**
  * Calculates the total size of the data if it is encoded again
  *
- * @param data the decoded data
  * @return the size of [data] if it is encoded again
  */
-size_t peerProtocolCalculateSize(PeerProtocol *data);
+size_t peerProtocolCalculateSize();
 
 /**
  * Gets all parts from a binary message
@@ -155,7 +159,7 @@ size_t clientProtocolCalculateSize(ClientProtocol *data);
  * @param prev the previous peer
  * @return whether the peer is responsible
  */
-bool id_is_between(byte16 hash_id, Peer this, Peer prev);
+bool id_is_between(byte16 hash_id, Peer* this, Peer* prev);
 
 /**
  * Sends a lookup request for when there was a node found that matches
@@ -163,7 +167,7 @@ bool id_is_between(byte16 hash_id, Peer this, Peer prev);
  * @param
  * @return
  */
-void send_found_lookup(PeerProtocol *decodedData, Peer next);
+void send_found_lookup(PeerProtocol *decodedData, Peer* next);
 
 /**
  * Recursively lookup the first not used entry in the raw finger table

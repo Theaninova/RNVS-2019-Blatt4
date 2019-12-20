@@ -12,39 +12,49 @@
 // by using the packed attribute the compiler will not insert any data between or around the struct when in memory for
 // optimization. That means that we can layout the data structure that we have for the network protocol in a struct
 // and then just access the individual attributes and automatically get the correct positions
-typedef struct __attribute__((packed)) {
+/*typedef struct __attribute__((packed)) {
     byte8 header;
     byte16 hashID;
     byte16 nodeID;
     byte32 nodeIP;
     byte16 nodePort;
-} RawPeerProtocol;
+} RawPeerProtocol;*/
 
 void decode_peerProtocol(val unknown *msg, PeerProtocol *data) {
-    RawPeerProtocol *raw = (RawPeerProtocol *) msg;
+    data->control = as(byte8, msg) MASK CONTROL_BIT;
+    data->finger = as(byte8, msg) MASK FINGER_BIT;
+    data->fack = as(byte8, msg) MASK FACK_BIT;
+    data->join = as(byte8, msg) MASK JOIN_BIT;
+    data->notify = as(byte8, msg) MASK NOTIFY_BIT;
+    data->stabilize = as(byte8, msg) MASK STABILIZE_BIT;
+    data->reply = as(byte8, msg) MASK REPLY_BIT;
+    data->lookup = as(byte8, msg) MASK LOOKUP_BIT;
 
-    data->control = raw->header MASK CONTROL_BIT;
-    data->reply = raw->header MASK REPLY_BIT;
-    data->lookup = raw->header MASK LOOKUP_BIT;
-
-    data->hashId = ntohs(raw->hashID);
-    data->nodeId = ntohs(raw->nodeID);
-    data->nodeIp = ntohl(raw->nodeIP); // TODO: is that right?
-    data->nodePort = /*ntohs(*/raw->nodePort/*)*/;
+    data->hashId = ntohs(as(byte16, msg + sizeof(byte8)));
+    data->nodeId =   ntohs(as(byte16, msg + sizeof(byte8) + sizeof(byte16)));
+    data->nodeIp =   ntohl(as(byte32, msg + sizeof(byte8) + sizeof(byte16) + sizeof(byte16)));
+    data->nodePort = ntohs(as(byte32, msg + sizeof(byte8) + sizeof(byte16) + sizeof(byte16) + sizeof(byte32)));
 }
 
-size_t peerProtocolCalculateSize(PeerProtocol *data) {
-    return sizeof(RawPeerProtocol);
+size_t peerProtocolCalculateSize() {
+    return 11;
 }
 
 void *encode_peerProtocol(PeerProtocol *data) {
-    RawPeerProtocol *msg = calloc(peerProtocolCalculateSize(data), 1);
+    unknown* msg = calloc(peerProtocolCalculateSize(data), 1);
 
-    msg->header = data->control COMBINE data->reply COMBINE data->lookup;
-    msg->hashID = htons(data->hashId);
-    msg->nodeID = htons(data->nodeId);
-    msg->nodeIP = htonl(data->nodeIp);
-    msg->nodePort = htons(data->nodePort);
+    as(byte8, msg) = data->control
+            COMBINE data->finger
+            COMBINE data->fack
+            COMBINE data->join
+            COMBINE data->notify
+            COMBINE data->stabilize
+            COMBINE data->reply
+            COMBINE data->lookup;
+    as(byte16, msg + sizeof(byte8)) = htons(data->hashId);
+    as(byte16, msg + sizeof(byte8) + sizeof(byte16)) = htons(data->nodeId);
+    as(byte32, msg + sizeof(byte8) + sizeof(byte16) + sizeof(byte16)) = htonl(data->nodeIp);
+    as(byte32, msg + sizeof(byte8) + sizeof(byte16) + sizeof(byte16) + sizeof(byte32)) = htons(data->nodePort);
 
     return msg;
 }
@@ -102,7 +112,7 @@ void *encode_clientProtocol(ClientProtocol *data) {
     return msg;
 }
 
-PeerProtocol make_peerProtocol(bool reply, bool lookup, byte16 hashID, Peer peer) {
+PeerProtocol make_peerProtocol(bool reply, bool lookup, byte16 hashID, Peer* peer) {
     PeerProtocol result;
 
     result.control = CONTROL_BIT;
@@ -111,18 +121,18 @@ PeerProtocol make_peerProtocol(bool reply, bool lookup, byte16 hashID, Peer peer
 
     result.hashId = hashID;
 
-    result.nodeId = peer.id;
-    result.nodeIp = peer.ip;
-    result.nodePort = peer.port;
+    result.nodeId = peer->id;
+    result.nodeIp = peer->ip;
+    result.nodePort = peer->port;
 
     return result;
 }
 
-bool id_is_between(byte16 hash_id, Peer this, Peer prev){
-    return in_range((byte16) hash_id, (byte16) this.id, (byte16) prev.id);
+bool id_is_between(byte16 hash_id, Peer* this, Peer* prev){
+    return in_range(hash_id, this->id, prev->id);
 }
 
-PeerProtocol peerProtocol_from_clientProtocol(ClientProtocol *clientProtocol, Peer peer) {
+PeerProtocol peerProtocol_from_clientProtocol(ClientProtocol *clientProtocol, Peer* peer) {
     PeerProtocol result = make_peerProtocol(false, true,
             get_hash_value(clientProtocol->key, clientProtocol->key_length),
             peer);
@@ -130,13 +140,13 @@ PeerProtocol peerProtocol_from_clientProtocol(ClientProtocol *clientProtocol, Pe
     return result;
 }
 
-void send_found_lookup(PeerProtocol *data, Peer next){
+void send_found_lookup(PeerProtocol *data, Peer* next){
     data->control   =   CONTROL_BIT;
     data->reply     =   REPLY_BIT;
     data->lookup    =   0u;
-    data->nodePort  =   next.port;
-    data->nodeIp    =   next.ip;
-    data->nodeId    =   next.id;
+    data->nodePort  =   next->port;
+    data->nodeIp    =   next->ip;
+    data->nodeId    =   next->id;
 
     int_addr_to_str(nodeIp, data->nodeIp)
     int_port_to_str(nodePort, data->nodePort)
@@ -175,10 +185,10 @@ void check_chord_rules(raw_fingertable* raw_fingers, PeerInfo* current){        
     tmp   =   raw_fingers->fingers;
     byte16  check_id;
     for(byte16 i = 0; i<raw_fingers->count; i++){
-        check_id                =  (byte16) current->this.id + ( (2 << i) % (2 << raw_fingers->count));              // pow (2, i) = 2 << i
+        check_id                =  (byte16) current->this->id + ( (2u << i) % (2u << raw_fingers->count));              // pow (2, i) = 2 << i
         //if(id_is_between(check_id, tmp->)){
 
         }
-        current->this.next_finger    =   tmp;
+        current->this->next_finger    =   tmp;
 
 }

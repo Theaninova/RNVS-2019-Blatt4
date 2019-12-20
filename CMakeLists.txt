@@ -19,7 +19,6 @@ add_executable(peer
         src/generic/network.h
         src/helper/max/concurrent_task.c
         src/helper/max/concurrent_task.h
-        src/helper/max/extended_math.c
         src/helper/max/extended_math.h
         src/helper/wulkanat/commander.h
         src/helper/wulkanat/debug.h

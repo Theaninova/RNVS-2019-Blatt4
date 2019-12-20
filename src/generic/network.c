@@ -233,58 +233,67 @@ int32 direct_send(string addr, string port, unknown *data, size_t data_size) {
     return sock_fd;
 }
 
-void join(string joinAddrInt, string joinPortInt, Peer new_peer_info) {
-    PeerProtocol *join_request;
-    join_request->join       =   1;
-    join_request->control    =   1;
-    join_request->nodeId     =   new_peer_info.id;
-    join_request->nodeIp     =   new_peer_info.ip;
-    join_request->nodePort   =   new_peer_info.port;
-    direct_send(joinAddrInt, joinPortInt, (PeerProtocol*) join_request, sizeof(PeerProtocol));  // correct size?
-    if(sizeof(PeerProtocol) == sizeof(join_request) == NULL) LOG("size ok, join, Network.c");
+void join(string joinAddrInt, string joinPortInt, Peer* new_peer_info) {
+    LOG("Sending Join");
+    PeerProtocol join_request;
+    join_request.join       =   JOIN_BIT;
+    join_request.control    =   CONTROL_BIT;
+    join_request.nodeId     =   new_peer_info->id;
+    join_request.nodeIp     =   new_peer_info->ip;
+    join_request.nodePort   =   new_peer_info->port;
+    unknown* encoded_request =  encode_peerProtocol(&join_request);
+    direct_send(joinAddrInt, joinPortInt, encoded_request, peerProtocolCalculateSize(&join_request));
     }
 
-void notify(byte32 target_node_IP, byte16 target_node_Port, Peer next_peer_info){
-    PeerProtocol *notify_request;
-    notify_request->control     =   1;
-    notify_request->notify      =   1;
-    notify_request->nodeId      =   next_peer_info.id;
-    notify_request->nodeIp      =   next_peer_info.ip;
-    notify_request->nodePort    =   next_peer_info.port;
+void notify(byte32 target_node_IP, byte16 target_node_Port, Peer* next_peer_info){
+    LOG("Sending Notify");
+    PeerProtocol notify_request;
+    notify_request.control     =   CONTROL_BIT;
+    notify_request.notify      =   NOTIFY_BIT;
+    notify_request.nodeId      =   next_peer_info->id;
+    notify_request.nodeIp      =   next_peer_info->ip;
+    notify_request.nodePort    =   next_peer_info->port;
     int_addr_to_str(notifyaddr_str, target_node_IP)
     int_port_to_str(notifyport_str, target_node_Port)
-    direct_send(notifyaddr_str, notifyport_str, (PeerProtocol*) notify_request, sizeof(PeerProtocol));  // correct size?
+    unknown* encoded_request =  encode_peerProtocol(&notify_request);
+    HEX_VALUE_LOG(encoded_request,peerProtocolCalculateSize(&notify_request))
+    LOG_INT(as(int32, encoded_request));
+    direct_send(notifyaddr_str, notifyport_str, encoded_request, peerProtocolCalculateSize(&notify_request));
 }
 
-void stabilize(byte32 next_node_IP, byte16 next_node_Port, Peer this_peer_info){
-    PeerProtocol *stabilize_request;
-    stabilize_request->stabilize    =   1;
-    stabilize_request->control      =   1;
-    stabilize_request->nodeId       =   this_peer_info.id;
-    stabilize_request->nodeIp       =   this_peer_info.ip;
-    stabilize_request->nodePort     =   this_peer_info.port;
+void stabilize(byte32 next_node_IP, byte16 next_node_Port, Peer* this_peer_info){
+    LOG("Sending Stabilize");
+    PeerProtocol stabilize_request;
+    stabilize_request.stabilize    =   STABILIZE_BIT;
+    stabilize_request.control      =   CONTROL_BIT;
+    stabilize_request.nodeId       =   this_peer_info->id;
+    stabilize_request.nodeIp       =   this_peer_info->ip;
+    stabilize_request.nodePort     =   this_peer_info->port;
     int_addr_to_str(nextaddr_str, next_node_IP)
     int_port_to_str(nextport_str, next_node_Port)
-    direct_send(nextaddr_str, nextport_str, (PeerProtocol*) stabilize_request, sizeof(PeerProtocol));  // correct size?
+    unknown* encoded_request =  encode_peerProtocol(&stabilize_request);
+    direct_send(nextaddr_str, nextport_str, encoded_request, peerProtocolCalculateSize(&stabilize_request));  // correct size?
 }
 
 
-void buildfinger(byte32 next_node_IP, byte16 next_node_Port, Peer this_peer_info){
-    PeerProtocol *finger_request;
-    finger_request->lookup  =   1;
-    finger_request->control =   1;
-    finger_request->finger  =   0;                          // sollen die anderen Nodes dann auch direkt ihre Fingertable aufbauen oder bezieht sich das auf jeden Node?
-    finger_request->nodeIp  =   this_peer_info.ip;
-    finger_request->nodePort=   this_peer_info.port;
+void buildfinger(byte32 next_node_IP, byte16 next_node_Port, Peer* this_peer_info){
+    LOG("building Finger");
+    PeerProtocol finger_request;
+    finger_request.lookup  =   LOOKUP_BIT;
+    finger_request.control =   CONTROL_BIT;
+    finger_request.finger  =   0;                          // sollen die anderen Nodes dann auch direkt ihre Fingertable aufbauen oder bezieht sich das auf jeden Node?
+    finger_request.nodeIp  =   this_peer_info->ip;
+    finger_request.nodePort=   this_peer_info->port;
 
-    Peer* tmp = &this_peer_info.next_finger;
+    Peer* tmp = this_peer_info->next_finger;
     //while(tmp->next_finger != NULL) {
     for(byte16 i = 0; i < 16; i++){                         // numbers can be 16 bits
-        if(this_peer_info.next_finger != NULL) {
-            finger_request->nodeId  =  this_peer_info.id + ( (2 << i) % 65536);
+        if(this_peer_info->next_finger != NULL) {
+            finger_request.nodeId  =  this_peer_info->id + ( (2u << i) % 65536);
             int_addr_to_str(nextaddr_str, next_node_IP)
             int_port_to_str(nextport_str, next_node_Port)
-            direct_send(nextaddr_str, nextport_str, (PeerProtocol *) finger_request, sizeof(PeerProtocol));
+            unknown* encoded_request =  encode_peerProtocol(&finger_request);
+            direct_send(nextaddr_str, nextport_str, encoded_request, peerProtocolCalculateSize(&finger_request));
         }
     }
 }

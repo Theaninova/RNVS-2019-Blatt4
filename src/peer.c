@@ -81,8 +81,8 @@ void next_job_in_queue() {
                                                   peer_info.this);
     unknown *encoded_response = encode_peerProtocol(&peer_request);
 
-    int_addr_to_str(next_addr, peer_info.next.ip)
-    int_port_to_str(next_port, peer_info.next.port)
+    int_addr_to_str(next_addr, peer_info.next->ip)
+    int_port_to_str(next_port, peer_info.next->port)
     int32 next_peer = setup_as_client(next_addr, next_port);
     send(next_peer, encoded_response, clientProtocolCalculateSize(&decodedData));
 }
@@ -99,7 +99,7 @@ NETWORK_RECEIVE_HANDLER(receive_handler, rec, sock_fd) {
         if (decodedData.finger) {                                               // Assumption: a peer responding to a finger-lookup has finger and lookup set, a request to build finger has only finger bit
             if (!decodedData.lookup) {
                 LOG("Finger");
-                buildfinger(peer_info.next.ip, peer_info.next.port, peer_info.this);  // Peer starts finger-requests
+                buildfinger(peer_info.next->ip, peer_info.next->port, peer_info.this);  // Peer starts finger-requests
             }
             /*
             if(decodedData.lookup) {                                            // Is a peer responding to a finger lookup request -> redirects to its neighbor and sends responsible
@@ -132,33 +132,52 @@ NETWORK_RECEIVE_HANDLER(receive_handler, rec, sock_fd) {
             ERROR("Fack should not be set!");
         } else if (decodedData.join) {
             LOG("Join");
-            if (id_is_between(decodedData.hashId, peer_info.this, peer_info.prev)) {
+            if (peer_info.next == NULL) {
+                peer_info.next = calloc(sizeof(Peer),1);
+                peer_info.next->ip = decodedData.nodeIp;
+                peer_info.next->port = decodedData.nodePort;
+                peer_info.next->id = decodedData.nodeId;
+
+                peer_info.prev = calloc(sizeof(Peer),1);
+                peer_info.prev->ip = decodedData.nodeIp;
+                peer_info.prev->port = decodedData.nodePort;
+                peer_info.prev->id = decodedData.nodeId;
+
+                notify(decodedData.nodeIp, decodedData.nodePort,
+                       peer_info.this);
+            }
+            else if (id_is_between(decodedData.hashId, peer_info.this, peer_info.prev)) {
                 // correct peer_info.prev
-                peer_info.prev.ip = decodedData.nodeIp;
-                peer_info.prev.port = decodedData.nodePort;
-                peer_info.prev.id = decodedData.nodeId;
+                peer_info.prev->ip = decodedData.nodeIp;
+                peer_info.prev->port = decodedData.nodePort;
+                peer_info.prev->id = decodedData.nodeId;
                 // notify join peer
                 notify(decodedData.nodeIp, decodedData.nodePort,
                        peer_info.this); //send Peer_protocol to #1 with data from #2 -> set data as peer_info-next
             } else {
                 LOG("Not found, redirecting to next peer");
-                int_addr_to_str(nodeIp, peer_info.next.ip)
-                int_port_to_str(nodePort, peer_info.next.port)
+                int_addr_to_str(nodeIp, peer_info.next->ip)
+                int_port_to_str(nodePort, peer_info.next->port)
                 direct_send(nodeIp, nodePort, rec->data, rec->data_length);
             }
         } else if (decodedData.notify) {
             LOG("Notify");
             // correct peer_info.next
 
-            peer_info.next.ip = decodedData.nodeIp;
-            peer_info.next.port = decodedData.nodePort;
-            peer_info.next.id = decodedData.nodeId;
+            peer_info.next->ip = decodedData.nodeIp;
+            peer_info.next->port = decodedData.nodePort;
+            peer_info.next->id = decodedData.nodeId;
 
         } else if (decodedData.stabilize) {
             LOG("Stabilize");
-            if (decodedData.nodeId == peer_info.prev.id && !peer_info.this.is_base) {
-                stabilize(peer_info.next.ip, peer_info.next.port,
-                          peer_info.this); //send Peer_protocol to #1 with infos from #2
+            if (peer_info.prev == NULL){
+                peer_info.prev = calloc(sizeof(Peer),1);
+                peer_info.prev->ip = decodedData.nodeIp;
+                peer_info.prev->port = decodedData.nodePort;
+                peer_info.prev->id = decodedData.nodeId;
+            }
+            else if (decodedData.nodeId == peer_info.prev->id && !peer_info.this->is_base) {
+                stabilize(peer_info.next->ip, peer_info.next->port, peer_info.this); //send Peer_protocol to #1 with infos from #2
             } else {
                 notify(decodedData.nodeIp, decodedData.nodePort, peer_info.prev);
             }
@@ -180,7 +199,7 @@ NETWORK_RECEIVE_HANDLER(receive_handler, rec, sock_fd) {
             next_job_in_queue();
 
         } else if (decodedData.lookup) {
-            if (peer_info.this.next_finger != NULL) {                                        // No fingertable yet
+            if (peer_info.this->next_finger != NULL) {                                        // No fingertable yet
                 LOG("Lookup using finger table");
 
             }
@@ -189,8 +208,8 @@ NETWORK_RECEIVE_HANDLER(receive_handler, rec, sock_fd) {
                 send_found_lookup(&decodedData, peer_info.next);
             } else {
                 LOG("Not found, redirecting to next peer");
-                int_addr_to_str(nodeIp, peer_info.next.ip)
-                int_port_to_str(nodePort, peer_info.next.port)
+                int_addr_to_str(nodeIp, peer_info.next->ip)
+                int_port_to_str(nodePort, peer_info.next->port)
                 direct_send(nodeIp, nodePort, rec->data, rec->data_length);
             }
 
@@ -204,7 +223,7 @@ NETWORK_RECEIVE_HANDLER(receive_handler, rec, sock_fd) {
 
         byte16 hashId = get_hash_value(decodedData.key, decodedData.key_length);
         LOG_BYTE(hashId);
-        LOG_BYTE(peer_info.this.id);
+        LOG_BYTE(peer_info.this->id);
 
         if (id_is_between(hashId, peer_info.this, peer_info.prev)) {
             // this peer is responsible
@@ -213,8 +232,8 @@ NETWORK_RECEIVE_HANDLER(receive_handler, rec, sock_fd) {
         } else if (id_is_between(hashId, peer_info.next, peer_info.this)) {
             // next peer is responsible
             LOG("Next peer is responsible");
-            int_addr_to_str(next_addr, peer_info.next.ip)
-            int_port_to_str(next_port, peer_info.next.port)
+            int_addr_to_str(next_addr, peer_info.next->ip)
+            int_port_to_str(next_port, peer_info.next->port)
             int32 next_peer = setup_as_client(next_addr, next_port);
 
             send(next_peer, rec->data, rec->data_length);
@@ -245,12 +264,13 @@ DEBUGGABLE_MAIN(argc, argv)
 
     STR_ARG(myIP, 0);
     STR_ARG(myPORT, 1);
-    DEFAULT_STR_ARG(myID, 2,0);
+    DEFAULT_STR_ARG(myID, 2,"0");
     str_addr_to_int(myAddrInt, myIP)
     str_port_to_int(myPortInt, myPORT)
-    peer_info.this.ip = myAddrInt;
-    peer_info.this.port = myPortInt;
-    peer_info.this.id = (byte16) atoi(myID);
+    peer_info.this = calloc(sizeof(Peer),1);
+    peer_info.this->ip = myAddrInt;
+    peer_info.this->port = myPortInt;
+    peer_info.this->id = (byte16) atoi(myID);
 
 
     LOG("Starting Peer");
@@ -267,17 +287,18 @@ DEBUGGABLE_MAIN(argc, argv)
         STR_ARG(joinPORT, 4);
         str_addr_to_int(joinAddrInt, joinIP)
         str_port_to_int(joinPortInt, joinPORT)
-        peer_info.join.ip = joinAddrInt;
-        peer_info.join.port = joinPortInt;
+        peer_info.join = calloc(sizeof(Peer),1);
+        peer_info.join->ip = joinAddrInt;
+        peer_info.join->port = joinPortInt;
 
         join(joinIP, joinPORT, peer_info.this);
     }
 
-    pthread_create(&(ctrl_block.tid), NULL, Stabilize_caller, (void *)&ctrl_block);       // for time triggered concurrent stabilize caller
+    // pthread_create(&(ctrl_block.tid), NULL, Stabilize_caller, (void *)&ctrl_block);       // for time triggered concurrent stabilize caller
 
     loop {
-        int new_sock = get_new_connection(sock_fd);
-        int code = receive(new_sock, receive_handler);
+        int32 new_sock = get_new_connection(sock_fd);
+        int32 code = receive(new_sock, receive_handler);
         if (code == STATUS_OK) {
             LOG("Status OK");
         } else if (code == STATUS_SOCKET_CLOSED) {
@@ -287,6 +308,7 @@ DEBUGGABLE_MAIN(argc, argv)
             // THROW(-1)
         }
     }
-    ctrl_block.control = 0;                                                                     // to exit stabilization thread
+    ctrl_block.control = 0;      // to exit stabilization thread
+
 }
 

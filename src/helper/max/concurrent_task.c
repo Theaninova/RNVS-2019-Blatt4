@@ -13,8 +13,8 @@ void *Stabilize_caller(void *block)
     LOG("Starting Stabilizer");
     while(current_Peer_stabilizer->control != 0) {
         sleep(2);
-        int_addr_to_str(currentNodeIP, current_Peer_stabilizer->current_Peer.this.ip)
-        int_port_to_str(currentNodePort, current_Peer_stabilizer->current_Peer.this.port)
+        int_addr_to_str(currentNodeIP, current_Peer_stabilizer->current_Peer.this->ip)
+        int_port_to_str(currentNodePort, current_Peer_stabilizer->current_Peer.this->port)
         Response stabilize_request;
         PeerProtocol stabilize_data = make_peerProtocol(0, 0, 0, current_Peer_stabilizer->current_Peer.this);
         stabilize_data.stabilize = 1;
